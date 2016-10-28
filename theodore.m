@@ -1,35 +1,35 @@
-function varargout = akhbar(varargin)
-% AKHBAR MATLAB code for akhbar.fig
-%      AKHBAR, by itself, creates a new AKHBAR or raises the existing
+function varargout = theodore(varargin)
+% THEODORE MATLAB code for theodore.fig
+%      THEODORE, by itself, creates a new THEODORE or raises the existing
 %      singleton*.
 %
-%      H = AKHBAR returns the handle to a new AKHBAR or the handle to
+%      H = THEODORE returns the handle to a new THEODORE or the handle to
 %      the existing singleton*.
 %
-%      AKHBAR('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in AKHBAR.M with the given input arguments.
+%      THEODORE('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in THEODORE.M with the given input arguments.
 %
-%      AKHBAR('Property','Value',...) creates a new AKHBAR or raises the
+%      THEODORE('Property','Value',...) creates a new THEODORE or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before akhbar_OpeningFcn gets called.  An
+%      applied to the GUI before theodore_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to akhbar_OpeningFcn via varargin.
+%      stop.  All inputs are passed to theodore_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help akhbar
+% Edit the above text to modify the response to help theodore
 
-% Last Modified by GUIDE v2.5 27-Oct-2016 19:09:11
+% Last Modified by GUIDE v2.5 27-Oct-2016 20:57:15
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @akhbar_OpeningFcn, ...
-                   'gui_OutputFcn',  @akhbar_OutputFcn, ...
+                   'gui_OpeningFcn', @theodore_OpeningFcn, ...
+                   'gui_OutputFcn',  @theodore_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -44,26 +44,26 @@ end
 % End initialization code - DO NOT EDIT
 
 
-% --- Executes just before akhbar is made visible.
-function akhbar_OpeningFcn(hObject, eventdata, handles, varargin)
+% --- Executes just before theodore is made visible.
+function theodore_OpeningFcn(hObject, eventdata, handles, varargin)
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% varargin   command line arguments to akhbar (see VARARGIN)
+% varargin   command line arguments to theodore (see VARARGIN)
 
-% Choose default command line output for akhbar
+% Choose default command line output for theodore
 handles.output = hObject;
 
 % Update handles structure
 guidata(hObject, handles);
 
-% UIWAIT makes akhbar wait for user response (see UIRESUME)
+% UIWAIT makes theodore wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = akhbar_OutputFcn(hObject, eventdata, handles) 
+function varargout = theodore_OutputFcn(hObject, eventdata, handles) 
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
