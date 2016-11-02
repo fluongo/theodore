@@ -98,7 +98,7 @@ guidata(hObject, handles);
 global moviedata
 moviedata = temp.moviedata;
 
-imshow(squeeze(moviedata(:,:,90)) , 'Parent', handles.axes1)
+imshow(squeeze(moviedata(:,:,1)) , 'Parent', handles.axes1)
 
 set(handles.loadingText, 'String', 'LOADING....'); drawnow
 
@@ -516,6 +516,8 @@ for i = 1 :length(all_textures)
 		break;
 	end;
 end
+
+set(handles.loadingText, 'String', ' ')
 
 % Clear the screen/close ports
 Screen('CloseAll');
