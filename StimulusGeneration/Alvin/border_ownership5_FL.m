@@ -3,10 +3,15 @@
 % adding the stim_info to each stimulus type  2016.4.20
 % modified 4.12 add moving texture background
 
-function stim_example = border_ownership4_FL( params )
+function stim_example = border_ownership5_FL( params )
 % Version of Lu's stimulus generation software that will also output a
 % stimulus structure that has all of the useful information in stimParams,
 % for use with the Alvin, stimulus generation GUI
+
+% NOTE: There was a bug in the previous version, whereby two things were
+% not happening.... 
+% 1. the background figure was not moving with the
+% 2. the background was not moving on these conditions
 
 % parameters
 frame_rate = params.framerate;
@@ -132,11 +137,11 @@ for j = 1:3 % position
     frames = round(frame_rate*stim_duration);
     d_x = sin( ((1:frames)-1)*(pi/2) ) * mov_range;
     template{k} = zeros(resy,resx, frames,'single');
-
+    
     for m = 1:frames
         x_obj_m = valid_matrix_index(x_obj - d_x(m), resx); % move
-        template{k}(:,:,m) = imtx_bg;
-        template{k}(y_obj, x_obj_m, m) = mov_fg(y_obj, x_obj_m);
+        template{k}(:,:,m) = imtx_bg; % Background
+        template{k}(y_obj, x_obj_m, m) = mov_fg(y_obj, x_obj_m + d_x(m)); % Foreground
     end
 
     stim_info(k).stim_type = 'moving texture object 1';
@@ -155,7 +160,7 @@ for j = 1:3 % position
     for m = 1:frames
         x_obj_m = valid_matrix_index(x_obj - d_x(m), resx); % move
         template{k}(:,:,m) = imtx_fg;
-        template{k}(y_obj, x_obj_m, m) = mov_bg(y_obj, x_obj_m);
+        template{k}(y_obj, x_obj_m, m) = mov_bg(y_obj, x_obj_m + d_x(m));
     end
 
     stim_info(k).stim_type = 'moving texture object 1';
@@ -179,7 +184,7 @@ template{k} = zeros(resy, resx, mov_frames,'single');
 x_bg_m =  mov_range+1 : resx + mov_range; 
 
 for m = 1:mov_frames
-template{k}(:,:,m) = mov_fg(:, x_bg_m - d_x(m));         
+template{k}(:,:,m) = mov_fg(:, x_bg_m + d_x(m));         
 end 
 
 stim_info(k).stim_type = 'moving texture background 1';

@@ -22,7 +22,7 @@ function varargout = theodore(varargin)
 
 % Edit the above text to modify the response to help theodore
 
-% Last Modified by GUIDE v2.5 28-Oct-2016 15:13:02
+% Last Modified by GUIDE v2.5 23-Feb-2017 14:46:29
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -52,8 +52,22 @@ function theodore_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to theodore (see VARARGIN)
 
+% Identify compute and if it is not the 2P computer, then open widefield
+% serial
+
+
+sid = get(com.sun.security.auth.module.NTSystem,'DomainSID');
+if ~strcmp(sid, 'S-1-5-21-234047508-22126698-30228153')
+    global sWF
+    sWF = serial('COM3');
+    fopen(sWF)
+end
+    
+
 % Choose default command line output for theodore
 handles.output = hObject;
+
+
 
 % Setup some value of check boxes
 handles.TTLcheck = 0;
@@ -63,7 +77,11 @@ handles.send2Pdatacheck = 0;
 
 imshow(imread('theodoreLogo.jpg') , 'Parent', handles.axes2)
 
+set(handles.axes1, 'xtick', [], 'ytick', [])
+
 set(handles.figure1,'CloseRequestFcn',[]);
+
+
 
 % Update handles structure
 guidata(hObject, handles);
@@ -91,13 +109,16 @@ function fileload_Callback(hObject, eventdata, handles)
 [handles.fn, pathname] = uigetfile('..\\stimulus_movies\'); 
 fnText_Callback(hObject, eventdata, handles)
 temp = load(fullfile(pathname, handles.fn));
-handles.fnPath = fullfile(pathname, handles.fn);
+handles.fnPath = fullfile(pathname, handles.fn)
 
 guidata(hObject, handles);
 
 global moviedata
-moviedata = temp.moviedata;
-
+try
+	moviedata = temp.moviedata;
+catch
+	moviedata = temp.stim; % Lu names it differently/....
+end
 imshow(squeeze(moviedata(:,:,1)) , 'Parent', handles.axes1)
 
 set(handles.loadingText, 'String', 'LOADING....'); drawnow
@@ -146,29 +167,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-% --- Executes on selection change in rigType.
-function rigType_Callback(hObject, eventdata, handles)
-% hObject    handle to rigType (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns rigType contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from rigType
-
-
-% --- Executes during object creation, after setting all properties.
-function rigType_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to rigType (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
 % --- Executes on button press in spherical.
 function spherical_Callback(hObject, eventdata, handles)
 % hObject    handle to spherical (see GCBO)
@@ -181,14 +179,6 @@ guidata(hObject, handles);
 % Hint: get(hObject,'Value') returns toggle state of spherical
 
 
-% --- Executes on button press in photodiodebox.
-function photodiodebox_Callback(hObject, eventdata, handles)
-% hObject    handle to photodiodebox (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of photodiodebox
-
 
 % --- Executes on button press in goBut.
 function goBut_Callback(hObject, eventdata, handles)
@@ -197,74 +187,94 @@ function goBut_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Startup PTB and prepare the textures...
-global moviedata
+global moviedata sWF
 
 
 % Check if you are sending TTLs
 if handles.TTLcheck
-	s = serial('COM3');
-	fopen(s);
-end
-
-% Check if you are sending 2P data
-if handles.send2Pdatacheck
-	sbudp = udp('131.215.25.182', 'RemotePort', 7000);
-	fopen(sbudp)
+	if ~isempty(sWF)
+		if strcmp(sWF.Status, 'open')
+			fclose(sWF)
+		end
+	end
+    s = serial('COM3');
+    fopen(s);
 end
 
 GUIhandle = gcf;
 
 [window, windowRect] = TheodorePTBStartup2P(2, handles.Sphericalcheck);
 
+
+if isa(moviedata, 'single')
+	moviedata = double(moviedata);
+end
 all_textures = PTBprepTextures(moviedata, window);
 
 t =  Screen('Flip', window); % Get flip time
 filtMode = 0; % Nearest interpolation
 
+nRepeats = str2num(get(handles.editRepeats, 'String'));
+
+
 global playbackHz
 
-if handles.send2Pdatacheck
-	pause(3); 
+if handles.TTLcheck
+	disp('SENDING 2P DATA....')
+	sbudp = udp('131.215.25.182', 'RemotePort', 7000);
+	fopen(sbudp)
+	pause(5); 
 	fprintf(sbudp, 'G'); 
-	fprintf(sbudp, ['M', handles.fnPath]);	
+	pause(20)
+	try
+		fprintf(sbudp, ['M', handles.fnPath]);	
+	catch
+		global fnPath; fprintf(sbudp, ['M', fnPath]);	
+	end
+	
 	fprintf(sbudp, sprintf('Mplayback of %d hz', playbackHz))
 	if handles.Sphericalcheck
 		fprintf(sbudp, ['M', 'spherical correction applied to stimulus'])
 	end
-	pause(7);
 end
 
 % Do two cases for whether you need to send a ttl or not
 
 if ~handles.TTLcheck
-	for i = 1 :size(moviedata, 3)
-		Screen('DrawTexture', window, all_textures(i), [], windowRect, [], filtMode);
-		t = Screen('Flip', window, t+1/playbackHz);
-		if KbCheck
-			break;
-		end;
-	end
-else
 	
-	for i = 1 :size(moviedata, 3)
-		fprintf(s,1)
-		Screen('DrawTexture', window, all_textures(i), [], windowRect, [], filtMode);
-		t = Screen('Flip', window, t+1/playbackHz);
-		
-		if mod(i,500) == 499
-			flushinput(s)
+	for ll = 1:nRepeats
+		for i = 1 :size(moviedata, 3)
+			Screen('DrawTexture', window, all_textures(i), [], windowRect, [], filtMode);
+			t = Screen('Flip', window, t+1/playbackHz);
+			if KbCheck
+				break;
+			end;
 		end
-		
-		if KbCheck
-			break;
-		end;
+	end
+	
+else
+	for ll = 1:nRepeats
+		for i = 1 :size(moviedata, 3)
+			fprintf(s,1)
+			Screen('DrawTexture', window, all_textures(i), [], windowRect, [], filtMode);
+			t = Screen('Flip', window, t+1/playbackHz);
+
+			if mod(i,500) == 499
+				flushinput(s)
+			end
+
+			if KbCheck
+				break;
+			end;
+		end
 	end
 	fclose(s)
 end
 
-if handles.send2Pdatacheck
-	pause(7)
+if handles.TTLcheck
+	pause(2)
 	fprintf(sbudp, 'S')
+	pause(10)
 	fclose(sbudp)
 end
 
@@ -359,6 +369,23 @@ function exitBut_Callback(hObject, eventdata, handles)
 % hObject    handle to exitBut (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+%Check if any arduinos are left open and close them
+global s sWF
+
+if isfield(sWF, 'status')
+	if strcmp(sWF.Status, 'open')
+		fclose(sWF)
+	end
+end
+
+if isfield(s, 'status')
+	if strcmp(s.Status, 'open')
+		fclose(s)
+	end
+end
+
+delete(instrfindall)
 
 close all force
 
@@ -521,3 +548,633 @@ set(handles.loadingText, 'String', ' ')
 
 % Clear the screen/close ports
 Screen('CloseAll');
+
+
+
+function textNtrials_Callback(hObject, eventdata, handles)
+% hObject    handle to textNtrials (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of textNtrials as text
+%        str2double(get(hObject,'String')) returns contents of textNtrials as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function textNtrials_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to textNtrials (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in pushRunRetin.
+function pushRunRetin_Callback(hObject, eventdata, handles)
+% hObject    handle to pushRunRetin (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+global sWF
+flushinput(sWF)
+load('C:\Users\KOFIKO3\Desktop\New folder\retinotopicNiell.mat')
+%load('C:\Users\KOFIKO3\Desktop\New folder\Retinotopy_CM_noise_10sec_NoBlank.mat')
+
+
+playbackHz = 30;
+nRepeats = str2num(get(handles.textNtrials, 'String')); % Number of times to repeat stimulus
+
+
+sca; PsychDefaultSetup(2); Screen('Preference', 'SkipSyncTests', 0); screens = Screen('Screens');
+screenNumber = 1%max(screens);
+
+% Enter DEFCON HIGH PRIORITY and define colors
+priorityLevel=MaxPriority(screenNumber); Priority(priorityLevel);
+white = 255; black = 1;
+grey = white / 2;
+
+% Open an on screen window using PsychImaging and color it grey.
+Screen('Preference', 'SkipSyncTests', 1)
+[window, windowRect] = PsychImaging('OpenWindow', screenNumber, 0.5);
+PsychImaging('PrepareConfiguration');
+% configFile = 'C:\Users\KOFIKO3\AppData\Roaming\Psychtoolbox\GeometryCalibration\CSVCalibdata_1.mat'
+
+if get(handles.screenPosition, 'Value') == 1; % Left value
+    configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_1Mon.mat'
+elseif get(handles.screenPosition, 'Value') == 2; % Center value
+    configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_1Mon_Center.mat'
+end
+
+PsychImaging('AddTask', 'Allviews', 'GeometryCorrection', configFile);
+
+% Standard window
+color = 0.5; rect = []; pixelsize = []; numBuffers = []; stereomode = 0;
+[window, windowRect] = PsychImaging('OpenWindow', screenNumber, color, rect, pixelsize, numBuffers, stereomode);
+
+all_texturesH = zeros(1, size(allVertical,3)); all_texturesV = zeros(1, size(allVertical,3));
+
+for i = 1 : size(allVertical, 3) 
+    if mod(i,100) == 0
+        disp(sprintf('loaded frame %d', i));
+    end
+    all_texturesV(i) = Screen('MakeTexture', window, double(allVertical(:,:,i)));
+    all_texturesH(i) = Screen('MakeTexture', window, double(allHorizontal(:,:,i)));
+end
+
+filtMode = 0; % Nearest interpolation
+
+nTex = length(all_texturesH); % Number of text
+
+tic
+for j = 1:nRepeats
+    flushinput(sWF)
+    disp(sprintf('Horizontal Run %d out of %d', j, nRepeats))
+    %update to a current flip time
+    t =  Screen('Flip', window); % Get flip time
+    for i = 1 :nTex
+        Screen('DrawTexture', window, all_texturesH(i), [], windowRect, [], filtMode);
+        
+        % send a ttl every 3rd frames
+        if mod(i,3) == 1
+            fprintf(sWF,1)
+        end
+        
+        t = Screen('Flip', window, t + 1/playbackHz);
+
+    end
+end
+
+% Now do elevation
+
+for j = 1:nRepeats
+    flushinput(sWF)
+    %update to a current flip time
+    disp(sprintf('Vertical Run %d out of %d', j, nRepeats))
+    t =  Screen('Flip', window); % Get flip time
+    for i = 1 :nTex
+        Screen('DrawTexture', window, all_texturesV(i), [], windowRect, [], filtMode);
+        
+        % send a ttl every 3rd frames
+        if mod(i,3) == 1
+            fprintf(sWF,1)
+        end
+        
+        t = Screen('Flip', window, t + 1/playbackHz);
+    end
+end
+disp(sprintf('Elapsed time from all trials was .... %d and should have been %d', toc, nRepeats*10*2))
+% Clear the screen/close ports
+sca
+
+
+
+function edit15_Callback(hObject, eventdata, handles)
+% hObject    handle to edit15 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit15 as text
+%        str2double(get(hObject,'String')) returns contents of edit15 as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit15_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit15 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function edit16_Callback(hObject, eventdata, handles)
+% hObject    handle to edit16 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit16 as text
+%        str2double(get(hObject,'String')) returns contents of edit16 as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit16_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit16 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in WFotherGo.
+function WFotherGo_Callback(hObject, eventdata, handles)
+% hObject    handle to WFotherGo (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Startup PTB and prepare the textures...
+global moviedata sWF
+
+flushinput(sWF)
+
+sca; PsychDefaultSetup(2); Screen('Preference', 'SkipSyncTests', 0); screens = Screen('Screens');
+Screen('Preference', 'VisualDebugLevel', 1)
+screenNumber = 1 %max(screens);
+
+% Enter DEFCON HIGH PRIORITY and define colors
+priorityLevel=MaxPriority(screenNumber); Priority(priorityLevel);
+white = 255; black = 1;
+grey = white / 2;
+
+% Open an on screen window using PsychImaging and color it grey.
+[window, windowRect] = PsychImaging('OpenWindow', screenNumber, 0.5);
+if handles.Sphericalcheck == 1
+    PsychImaging('PrepareConfiguration');
+    % configFile = 'C:\Users\KOFIKO3\AppData\Roaming\Psychtoolbox\GeometryCalibration\CSVCalibdata_1.mat'
+    if get(handles.screenPosition, 'Value') == 1; % Left value
+        configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_1Mon.mat'
+    elseif get(handles.screenPosition, 'Value') == 2; % Center value
+        configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_1Mon_Center.mat'
+    else
+        return
+    end
+    PsychImaging('AddTask', 'Allviews', 'GeometryCorrection', configFile);
+else
+    disp('no spherical correction')
+end
+% Standard window
+color = 0.5; rect = []; pixelsize = []; numBuffers = []; stereomode = 0;
+[window, windowRect] = PsychImaging('OpenWindow', screenNumber, color, rect, pixelsize, numBuffers, stereomode);
+
+all_textures = zeros(1, size(moviedata,3)); 
+
+for i = 1 : size(moviedata, 3) 
+    if mod(i,100) == 0
+        disp(sprintf('loaded frame %d', i));
+    end
+    all_textures(i) = Screen('MakeTexture', window, moviedata(:,:,i));
+end
+
+filtMode = 0; % Nearest interpolation
+TTLeveryN = str2num(get(handles.edit16, 'String'))
+playbackHz = str2num(get(handles.playbackSpeedText, 'String'))
+nRepeats = str2num(get(handles.widefieldRepeats, 'String'))
+
+t =  Screen('Flip', window); % Get flip time
+for kk = 1:nRepeats
+    flushinput(sWF)
+    for i = 1 :length(all_textures)
+        if mod(i,400) == 1
+            disp(sprintf('Displaying frame %d out of %d', (kk-1)*size(moviedata, 3)+i, size(moviedata, 3)*nRepeats));
+            flushinput(sWF)
+        end
+        Screen('DrawTexture', window, all_textures(i), [], windowRect, [], filtMode);
+
+        % send a ttl every 3rd frames
+        if mod(i,TTLeveryN) == 1
+            fprintf(sWF,1)
+        end
+        
+        if KbCheck
+			break;
+		end;
+        
+        t = Screen('Flip', window, t + 1/playbackHz);
+
+    end
+end
+
+% Clear the screen/close ports
+sca
+
+
+
+function widefieldRepeats_Callback(hObject, eventdata, handles)
+% hObject    handle to widefieldRepeats (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of widefieldRepeats as text
+%        str2double(get(hObject,'String')) returns contents of widefieldRepeats as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function widefieldRepeats_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to widefieldRepeats (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in RunRetinotopy_2P.
+function RunRetinotopy_2P_Callback(hObject, eventdata, handles)
+% hObject    handle to RunRetinotopy_2P (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+nRepeats = str2num(get(handles.RetinotopyNrepeats2P, 'String'));
+
+% Check if you are sending TTLs
+if handles.TTLcheck
+    s = serial('COM3');
+    fopen(s);
+end
+
+GUIhandle = gcf;
+
+% Load in the data for retinotopy
+load('X:\stimulus_movies\widefield\retinotopicNiell.mat')
+load('X:\stimulus_movies\widefield\retinotopicNiell_10sec_NoBlank.mat')
+
+
+
+spherical = 1; % Always make spherical
+[window, windowRect] = TheodorePTBStartup2P(2, spherical);
+
+all_texturesH = PTBprepTextures(allHorizontal, window);
+all_texturesV = PTBprepTextures(allVertical, window);
+
+t =  Screen('Flip', window); % Get flip time
+filtMode = 0; % Nearest interpolation
+
+playbackHz = 30;
+
+if handles.TTLcheck
+	disp('SENDING 2P DATA....')
+	sbudp = udp('131.215.25.182', 'RemotePort', 7000);
+	fopen(sbudp)
+	pause(5); 
+	fprintf(sbudp, 'G'); 
+	pause(20)	
+	fprintf(sbudp, sprintf('MRetinotopy at %d Hz', playbackHz))
+	fprintf(sbudp, sprintf('MRepeats %d', nRepeats))
+
+	if handles.Sphericalcheck
+		fprintf(sbudp, ['M', 'spherical correction applied to stimulus'])
+	end
+end
+
+
+tic
+
+% Do two cases for whether you need to send a ttl or not
+for nn = 1:nRepeats % Horizontal
+	if handles.TTLcheck
+		flushinput(s)
+	end
+	disp(sprintf('Running horizontal trial %d out of %d', nn, nRepeats))
+	for i = 1 : length(all_texturesH)
+		if handles.TTLcheck
+			fprintf(s,1)
+		end
+		Screen('DrawTexture', window, all_texturesH(i), [], windowRect, [], filtMode);
+		t = Screen('Flip', window, t+1/playbackHz);
+	end
+end
+
+for nn = 1:nRepeats % Vertical
+	if handles.TTLcheck
+		flushinput(s)
+	end
+	disp(sprintf('Running vertical trial %d out of %d', nn, nRepeats))
+	for i = 1 : length(all_texturesH)
+		if handles.TTLcheck
+			fprintf(s,1)
+		end
+		Screen('DrawTexture', window, all_texturesV(i), [], windowRect, [], filtMode);
+		t = Screen('Flip', window, t+1/playbackHz);
+	end
+end
+disp(sprintf('Elapsed time %d and should have been %d', toc, nRepeats*2*10))
+
+% Clsoe arduino...
+if handles.TTLcheck
+	fclose(s)
+end
+
+if handles.TTLcheck
+	pause(5)
+	fprintf(sbudp, 'S')
+	pause(10)
+	fclose(sbudp)
+end
+
+% Clear the screen/close ports
+Screen('CloseAll')
+
+
+
+function RetinotopyNrepeats2P_Callback(hObject, eventdata, handles)
+% hObject    handle to RetinotopyNrepeats2P (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% Hints: get(hObject,'String') returns contents of RetinotopyNrepeats2P as text
+%        str2double(get(hObject,'String')) returns contents of RetinotopyNrepeats2P as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function RetinotopyNrepeats2P_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to RetinotopyNrepeats2P (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on selection change in screenPosition.
+function screenPosition_Callback(hObject, eventdata, handles)
+% hObject    handle to screenPosition (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+
+% Hints: contents = cellstr(get(hObject,'String')) returns screenPosition contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from screenPosition
+
+
+% --- Executes during object creation, after setting all properties.
+function screenPosition_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to screenPosition (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in checkbox7.
+function checkbox7_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox7 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox7
+
+
+% --- Executes on button press in checkbox8.
+function checkbox8_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox8 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox8
+
+
+% --- Executes on button press in pushbutton11.
+function pushbutton11_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton11 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% 
+% % %RF
+% disp('Loading RF....')
+% loadOutside('X:\MASTER_STIMULUS_FOLDER\2photon\RF_Dario_stim_3000fr.mat', 4, hObject, eventdata, handles)
+% goBut_Callback(hObject, eventdata, handles)
+% 
+% %FG1
+% disp('Loading FG....')
+% %optionPause(hObject, eventdata, handles)
+% loadOutside('X:\MASTER_STIMULUS_FOLDER\border_ownership_16c_Grating_Stexture_G_B_F_28Hz_1.5s_2017.04.06-00.29.28.mat', 28, hObject, eventdata, handles)
+% goBut_Callback(hObject, eventdata, handles)
+% 
+% %FG2
+% disp('Loading FG2....')
+% optionPause(hObject, eventdata, handles)
+% loadOutside('X:\MASTER_STIMULUS_FOLDER\border_ownership_16c_Grating_Stexture_F_28Hz_500ms_2017.04.06-14.44.28.mat', 28, hObject, eventdata, handles)
+% goBut_Callback(hObject, eventdata, handles)
+% 
+% % Moving figure
+% disp('Loading Moving Figure 1....')
+% optionPause(hObject, eventdata, handles)
+% loadOutside('X:\MASTER_STIMULUS_FOLDER\MovingSquares_GratingR_160s.mat', 28, hObject, eventdata, handles)
+% goBut_Callback(hObject, eventdata, handles)
+% 
+% % Moving figure
+% disp('Loading Moving Figure 2....')
+% optionPause(hObject, eventdata, handles)
+% loadOutside('X:\MASTER_STIMULUS_FOLDER\MovingSquares_SimoncelliTex1_160s.mat', 28, hObject, eventdata, handles)
+% goBut_Callback(hObject, eventdata, handles)
+% 
+% % Moving figure
+% disp('Loading Moving Figure 3....')
+% optionPause(hObject, eventdata, handles)
+% loadOutside('X:\MASTER_STIMULUS_FOLDER\MovingSquares_Grating_160s.mat', 28, hObject, eventdata, handles)
+% goBut_Callback(hObject, eventdata, handles)
+
+%%%%%%%%%%%%%%%%%%%%%%
+% 18CM Screen%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%
+
+% %RF
+% disp('Loading RF....')
+% loadOutside('X:\MASTER_STIMULUS_FOLDER\18cm_screenDistance\cm18_Dario_RFstim_3000fr.mat', 4, hObject, eventdata, handles)
+% goBut_Callback(hObject, eventdata, handles)
+% 
+% disp('pausing...')
+% pause(20)
+% 
+% %RF Surround
+% disp('Loading RF Surround....')
+% loadOutside('X:\MASTER_STIMULUS_FOLDER\18cm_screenDistance\cm18_RF_surround_28Hz_9size_10repeat.mat', 28, hObject, eventdata, handles)
+% goBut_Callback(hObject, eventdata, handles)
+% 
+% disp('pausing...')
+% pause(10)
+% 
+% 
+% % 
+% % disp('Press any key to pause experiment.....')
+% % tic
+% % while toc<10 % seconds
+% % 	if KbCheck
+% % 		disp('Pause, press any key to continue experiment...')
+% % 		pause
+% % 	end
+% % end
+% 
+% %Moving Square 1
+% disp('Loading Grating Moving Square 1....')
+% loadOutside('X:\MASTER_STIMULUS_FOLDER\18cm_screenDistance\cm18_MovingSquares_Grating_128pos_640s.mat', 28, hObject, eventdata, handles)
+% goBut_Callback(hObject, eventdata, handles)
+% 
+% 
+% disp('pausing...')
+% pause(10)
+% 
+% 
+% % disp('Press any key to pause experiment.....')
+% % tic
+% % while toc<10 % seconds
+% % 	if KbCheck
+% % 		disp('Pause, press any key to continue experiment...')
+% % 		pause
+% % 	end
+% % end
+
+%Moving Square 2
+disp('Loading SimncelliNoise Moving Square....')
+loadOutside('X:\MASTER_STIMULUS_FOLDER\18cm_screenDistance\cm18_MovingSquares_SimoncelliNoise_128pos_640s.mat', 28, hObject, eventdata, handles)
+goBut_Callback(hObject, eventdata, handles)
+
+
+disp('pausing...')
+pause(10)
+
+
+% disp('Press any key to pause experiment.....')
+% tic
+% while toc<10 % seconds
+% 	if KbCheck
+% 		disp('Pause, press any key to continue experiment...')
+% 		pause
+% 	end
+% end
+
+%Moving Square 3
+disp('Loading Grating Moving Square REVERSE....')
+loadOutside('X:\MASTER_STIMULUS_FOLDER\18cm_screenDistance\cm18_MovingSquares_GratingR_128pos_640s.mat', 28, hObject, eventdata, handles)
+goBut_Callback(hObject, eventdata, handles)
+
+disp('pausing...')
+pause(10)
+
+%HBO
+disp('Playing HBO movie')
+%optionPause(hObject, eventdata, handles)
+set(handles.editRepeats, 'String', '10')
+loadOutside('X:\MASTER_STIMULUS_FOLDER\Movie_HBO_30s.mat', 30, hObject, eventdata, handles)
+goBut_Callback(hObject, eventdata, handles)
+set(handles.editRepeats, 'String', '1')
+
+disp('DONE with all stimuli....')
+
+
+
+function loadOutside(fn, framerate, hObject, eventdata, handles)
+% Used for quickly loading in files same as the load button but as a
+% function
+
+[pathname,name,ext] = fileparts(fn) 
+handles.fn = [name, ext]
+
+fnText_Callback(hObject, eventdata, handles)
+temp = load(fullfile(pathname, handles.fn));
+handles.fnPath = fullfile(pathname, handles.fn);
+
+global fnPath
+fnPath = handles.fnPath;
+
+guidata(hObject, handles);
+
+global moviedata
+try
+	moviedata = temp.moviedata;
+catch
+	moviedata = temp.stim; % Lu names it differently/....
+end
+imshow(squeeze(moviedata(:,:,1)) , 'Parent', handles.axes1)
+
+set(handles.loadingText, 'String', 'LOADING....'); drawnow
+
+% Also try to manually set the Number of frames and playback speed,
+% otherwise ask for user entry
+nFrames = size(moviedata, 3);
+set(handles.NframesText, 'String', sprintf('%d', nFrames))
+global playbackHz
+
+playbackHz = framerate;
+set(handles.playbackSpeedText, 'String', sprintf('%d', playbackHz))
+
+set(handles.DurationText, 'String', sprintf('%.3g MIN', nFrames/playbackHz/60))
+
+set(handles.loadingText, 'String', 'LOADED')
+
+
+
+function editRepeats_Callback(hObject, eventdata, handles)
+% hObject    handle to editRepeats (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of editRepeats as text
+%        str2double(get(hObject,'String')) returns contents of editRepeats as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function editRepeats_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editRepeats (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end

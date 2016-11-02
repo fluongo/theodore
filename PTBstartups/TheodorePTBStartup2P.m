@@ -7,7 +7,8 @@ function [ window, windowRect ] = TheodorePTBStartup2P( ScreenNumber , spherical
 	
 	% Here we call some default settings for setting up Psychtoolbox
 	PsychDefaultSetup(2);
-
+	Screen('Preference', 'SkipSyncTests', 1); 
+	
 	% Get the screen numbers. This gives us a number for each of the screens
 	% attached to our computer.
 	screens = Screen('Screens');
@@ -33,7 +34,8 @@ function [ window, windowRect ] = TheodorePTBStartup2P( ScreenNumber , spherical
 	
 	if sphericalCheck
 		PsychImaging('PrepareConfiguration');
-		PsychImaging('AddTask', 'Allviews', 'GeometryCorrection', 'C:\Users\stimcomp2\AppData\Roaming\Psychtoolbox\GeometryCalibration\CSVCalibdata_2.mat');
+		%PsychImaging('AddTask', 'Allviews', 'GeometryCorrection', 'X:\_PTB_startups\NewUndistortionWF_config_1Mon.mat');
+		PsychImaging('AddTask', 'Allviews', 'GeometryCorrection', 'X:\_PTB_startups\2P_SideConfig_27cm.mat');
 	end
 	
 	

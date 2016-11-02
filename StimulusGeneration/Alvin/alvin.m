@@ -55,11 +55,13 @@ function alvin_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for alvin
 handles.output = hObject;
 
-update_stim(handles);
-update_duration(handles);
+%update_stim(handles);
+%update_duration(handles);
 
 % Update handles structure
 guidata(hObject, handles);
+
+imshow(imread('Alvin1.jpg'), 'Parent', handles.axes2)
 
 % UIWAIT makes alvin wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
@@ -152,7 +154,9 @@ function stimtype_Callback(hObject, eventdata, handles)
 
 % Hints: contents = cellstr(get(hObject,'String')) returns stimtype contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from stimtype
-update_stim(handles)
+
+get(handles.stimtype,'Value')
+
 
 % --- Executes during object creation, after setting all properties.
 function stimtype_CreateFcn(hObject, eventdata, handles)
@@ -313,7 +317,8 @@ function resx_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of resx as text
 %        str2double(get(hObject,'String')) returns contents of resx as a double
-update_stim(handles)
+%update_stim(handles)
+guidata(hObject, handles);
 
 % --- Executes during object creation, after setting all properties.
 function resx_CreateFcn(hObject, eventdata, handles)
@@ -541,7 +546,12 @@ function gen_stim_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 params = get_params(handles); 
-border_ownership4_FL(params);
+
+if get(handles.stimtype, 'Value') == 1
+    border_ownership4_FL(params);disp('old BO')
+elseif get(handles.stimtype, 'Value') == 2
+    border_ownership5_FL(params);disp('new border ownership')
+end
 
 
 function params = get_params(handles)
