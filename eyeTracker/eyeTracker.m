@@ -58,7 +58,10 @@ handles.output = hObject;
 % Update handles structure
 guidata(hObject, handles);
 
-global basler basler_src
+global basler basler_src basler_roi
+
+% Initialize between experiments
+basler_roi = [];
 
 info = imaqhwinfo('gige');
 
@@ -154,148 +157,151 @@ function AcquireButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global basler basler_src basler_roi
 
-try
-    closepreview(basler)
-catch
-    x=1;
-end
-
-triggerconfig(basler, 'hardware', 'DeviceSpecific', 'DeviceSpecific');
-basler.TriggerRepeat = inf;
-basler.FramesPerTrigger = 1;
-basler_src.TriggerMode = 'On';
-basler.ROIPosition = basler_roi;
-
-start(basler)
-
-set(handles.text4,'Visible','Off')
-set(handles.text3,'Visible','On')
-
-% Make a preview window
-hEye = figure('position', [1400,800,192,192]);axis('off')
-hRun = figure('position', [200,800,400,192]);
-
-% Add in code for the encoder....
-global W
-try
-    W = ChoiceWheel('COM7')
-catch
-    disp('encoder already open...')
-end
-
-try 
-    close 'Position Stream'
-catch
-    disp('no preview window to close..')
-end
-
-clear runData; 
-
-global runData cnt
-
-
-runData = zeros(1,500000, 'uint16'); 
-cnt = 1;
-
-% Bootleg way of figuring out time since last acquisition to determine when
-% acquisition is over....
-tSinceLast = 0;
-
-while isrunning(basler) & tSinceLast < 10
-    pause(0.05); % Acquire 100 run Position datapoints per second
-    
-    if mod(basler.FramesAcquired, 100) == 1
-        disp(sprintf('Acquiring frame %d ....', basler.FramesAcquired))
-    end
-    if basler.FramesAcquired == 0;
-        tSinceLast = 0; nTot = 0;
-    else
-        % Counter to check if counting has stopped....
-        if basler.FramesAcquired > nTot
-            tSinceLast = 0 
-            nTot = basler.FramesAcquired;
-        else
-            tSinceLast = tSinceLast+1
-        end
-        
-        figure(hEye); imagesc(peekdata(basler, 1));
-        runData(cnt) = W.currentPosition; cnt = cnt+1;
-        r = mod(cnt, 200);
-        figure(hRun); plot([runData(cnt - r + 1 : cnt-1)]);xlim([1,200]);ylim([1,1024]) ; 
-        title('RUN DATA')
-    end
-end
-
-disp('Stopped Acquiring')
-set(handles.text3, 'String', 'Done Acquiring and Waiting to Save..')
-
-
-
-% --- Executes on button press in stopButton.
-function stopButton_Callback(hObject, eventdata, handles)
-% hObject    handle to stopButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-global basler basler_src data
-
-set(handles.text3,'Visible','Off')
-
-stop(basler)
-
-basler_src.TriggerMode = 'Off';
-
-if basler.FramesAcquired == 0
-    set(handles.text4, 'String', 'No Frames Acquired....')
+if isempty(basler_roi)
+    h = warndlg('You must specify the ROI for the eye camera.....')
 else
+    try
+        closepreview(basler)
+    catch
+        x=1;
+    end
+    
+    % Open dialog to select where to save to...
+    saveDir = uigetdir('F:\\francisco','Select folder in which to save eye Data....')
+    
+    % Configure Camera
+    triggerconfig(basler, 'hardware', 'DeviceSpecific', 'DeviceSpecific');
+    basler.TriggerRepeat = inf;
+    basler.FramesPerTrigger = 1;
+    basler_src.TriggerMode = 'On';
+    basler.ROIPosition = basler_roi;
+
+    % Start acquisition
+    start(basler)
+    
+    % Loaded message
+    set(handles.text7, 'String', 'Waiting for stimulus trigger...')
+    
+    % Add in code for the encoder....
+    try
+        global W
+        W = ChoiceWheel('COM7');
+        
+    catch
+        disp('encoder already open...');
+    end
+
+    try 
+        close 'Position Stream'
+    catch
+        disp('no preview window to close..')
+    end
+
+    clear runData; 
+
+    global runData cnt
+
+
+    runData = zeros(1,500000, 'uint16'); 
+    cnt = 1;
+
+    % Bootleg way of figuring out time since last acquisition to determine when
+    % acquisition is over....
+    tSinceLast = 0;
+
+    while isrunning(basler) & tSinceLast < 10
+        pause(0.05); % Acquire 100 run Position datapoints per second
+
+        if mod(basler.FramesAcquired, 100) == 1
+            disp(sprintf('Acquiring frame %d ....', basler.FramesAcquired))
+        end
+        if basler.FramesAcquired == 0;
+            tSinceLast = 0; nTot = 0;
+        else
+            set(handles.text7, 'String', 'Acquiring data....')
+            % Counter to check if counting has stopped....
+            if basler.FramesAcquired > nTot
+                tSinceLast = 0 ;
+                nTot = basler.FramesAcquired;
+            else
+                tSinceLast = tSinceLast+1;
+            end
+
+            axes(handles.axes2); imagesc(peekdata(basler, 1)); title('EYE')
+            runData(cnt) = W.currentPosition; cnt = cnt+1;
+            r = mod(cnt, 200);
+            axes(handles.axes3); plot([runData(cnt - r + 1 : cnt-1)]);xlim([1,200]);ylim([1,1024]) ; 
+            title('RUN DATA')
+        end
+    end
+
+    disp('Stopped Acquiring')
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % Process and save the data
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    set(handles.text7, 'String', 'Done Acquiring and Saving data...')
+    
+    % Stop and reset camera
+    stop(basler)
+    basler.TriggerRepeat = 0;
+    basler_src.TriggerMode = 'Off';
+
     data = squeeze(getdata(basler, basler.FramesAcquired));
     % Truncate data by 4 pixels in each direction
     data = data(1:end-4, 1:end-4, :);
-
-    set(handles.text4, 'String', 'Analyzing and saving data.....')
-    set(handles.text4,'Visible','On')
-
-    folder_name = uigetdir('F:\\francisco','Select folder in which to save eye Data....')
     
-    
-%     Remove this for the time being since it takes too long.....
-%
-%     [centroid, area, data_vid] = quickPupilMeasure(data);
-%     % Save everything
-%     eyeData.centroid = centroid;
-%     eyeData.area = area;
-%     eyeData.vid_check = data_vid;
+    % Maximize the range represented in uint16 
+    data = single(data);
+    data = data - min(data(:)); 
+    data = data/max(data(:));
+    data = uint16(65535*data);
+
+    %     Remove this for the time being since it takes too long.....
+    %
+    %     [centroid, area, data_vid] = quickPupilMeasure(data);
+    %     % Save everything
+    %     eyeData.centroid = centroid;
+    %     eyeData.area = area;
+    %     eyeData.vid_check = data_vid;
     
     eyeData.vid_raw = data;
 
-    save(fullfile(folder_name, 'trialData.mat'), 'eyeData');
-
-    set(handles.text4, 'String', 'Computing and Saving Running Data....')
-    
-    global runData cnt
-    cnt
+    % Truncate runData and compute the speed..
     runPosition = uint16(runData(1:cnt-1));
-    
     
     x = diff(double(runPosition)); x(x>500) = 0; x(x<-500) = 0;
     runSpeed = x;
-    size(runSpeed)
-    size(runPosition)
     
-    figure; plot(runPosition)
-    figure; plot(runSpeed)
+    figure; plot(runPosition); title('Position')
+    figure; plot(runSpeed); title('Speed')
 
-    
-    runData = []
-    runData.position = runPosition
-    runData.T = linspace(1,size(data, 3), numel(runPosition) ) % Time in terms of frames for position
+    runData = [];
+    runData.position = runPosition;
+    runData.T = linspace(1,size(data, 3), numel(runPosition) ); % Time in terms of frames for position
     runData.speed = runSpeed
     
-    save(fullfile(folder_name, 'trialData.mat'), 'runData' , '-append')
-
-    set(handles.text4, 'String', sprintf('acquired... %d ... frames', size(data, 3) ))
+    save(fullfile(saveDir, 'trialData.mat'), 'eyeData', 'saveDir', 'runData')
+    
+    set(handles.text7, 'String', sprintf('acquired... %d ... frames', size(data, 3) ))
 end
+    
 
-% Clean out frames
+    
+    
+% catch
+%     % Graceful exit for camera....
+%     disp('Some error happened...')
+%     try
+%         stop(basler)
+%     catch
+%         x=1;
+%     end
+%     basler.TriggerRepeat = 0;
+%     basler_src.TriggerMode = 'Off';
+%     
+% end
+
 
 
 % --- Executes on button press in streamRunning.

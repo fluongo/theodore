@@ -1,4 +1,4 @@
-function varargout = theodore(varargin)
+function varargout = theodore_BN(varargin)
 % THEODORE MATLAB code for theodore.fig
 %      THEODORE, by itself, creates a new THEODORE or raises the existing
 %      singleton*.
@@ -75,7 +75,7 @@ handles.Sphericalcheck = 0;
 handles.photodiodecheck = 0;
 handles.send2Pdatacheck = 0;
 
-imshow(imread('theodoreLogo.jpg') , 'Parent', handles.axes2)
+imshow(rand(100,100) , 'Parent', handles.axes2)
 
 set(handles.axes1, 'xtick', [], 'ytick', [])
 
@@ -607,10 +607,14 @@ Screen('Preference', 'SkipSyncTests', 1)
 PsychImaging('PrepareConfiguration');
 % configFile = 'C:\Users\KOFIKO3\AppData\Roaming\Psychtoolbox\GeometryCalibration\CSVCalibdata_1.mat'
 
-if get(handles.screenPosition, 'Value') == 1; % Left value
-    configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_1Mon.mat'
-elseif get(handles.screenPosition, 'Value') == 2; % Center value
-    configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_1Mon_Center.mat'
+if get(handles.screenPosition, 'Value') == 1; % All value
+    configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_3Mon_All.mat';
+elseif get(handles.screenPosition, 'Value') == 2; % Left value
+    configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_3Mon_All.mat';
+elseif get(handles.screenPosition, 'Value') == 3; % Center value
+    configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_3Mon_All.mat';
+elseif get(handles.screenPosition, 'Value') == 4; % Right value
+    configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_3Mon_All.mat';
 end
 
 PsychImaging('AddTask', 'Allviews', 'GeometryCorrection', configFile);
@@ -670,7 +674,7 @@ for j = 1:nRepeats
         t = Screen('Flip', window, t + 1/playbackHz);
     end
 end
-disp(sprintf('Elapsed time from all trials was .... %d and should have been %d', toc, nRepeats*10*2))
+disp(sprintf('Elapsed time from all trials was .... %d and should have been %d BLAHBLAH', toc, nRepeats*10*2))
 % Clear the screen/close ports
 sca
 
@@ -746,12 +750,14 @@ grey = white / 2;
 if handles.Sphericalcheck == 1
     PsychImaging('PrepareConfiguration');
     % configFile = 'C:\Users\KOFIKO3\AppData\Roaming\Psychtoolbox\GeometryCalibration\CSVCalibdata_1.mat'
-    if get(handles.screenPosition, 'Value') == 1; % Left value
-        configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_1Mon.mat'
-    elseif get(handles.screenPosition, 'Value') == 2; % Center value
-        configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_1Mon_Center.mat'
-    else
-        return
+    if get(handles.screenPosition, 'Value') == 1; % All value
+        configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_3Mon_All.mat';
+    elseif get(handles.screenPosition, 'Value') == 2; % Left value
+        configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_3Mon_All.mat';
+    elseif get(handles.screenPosition, 'Value') == 3; % Center value
+        configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_3Mon_All.mat';
+    elseif get(handles.screenPosition, 'Value') == 4; % Right value
+        configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_3Mon_All.mat';
     end
     PsychImaging('AddTask', 'Allviews', 'GeometryCorrection', configFile);
 else
