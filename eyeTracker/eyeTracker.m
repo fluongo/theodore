@@ -228,7 +228,13 @@ else
             end
 
             axes(handles.axes2); imagesc(peekdata(basler, 1)); title('EYE')
-            runData(cnt) = W.currentPosition; cnt = cnt+1;
+            % In case of error
+            try
+                runData(cnt) = W.currentPosition; cnt = cnt+1;
+            catch
+                runData(cnt) = runData(cnt-1); cnt = cnt+1;
+            end
+            
             r = mod(cnt, 200);
             axes(handles.axes3); plot([runData(cnt - r + 1 : cnt-1)]);xlim([1,200]);ylim([1,1024]) ; 
             title('RUN DATA')
