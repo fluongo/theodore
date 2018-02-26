@@ -22,7 +22,7 @@ function varargout = theodore(varargin)
 
 % Edit the above text to modify the response to help theodore
 
-% Last Modified by GUIDE v2.5 23-Feb-2017 14:46:29
+% Last Modified by GUIDE v2.5 25-Feb-2018 17:09:30
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -1175,3 +1175,47 @@ function editRepeats_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on selection change in listbox6.
+function listbox6_Callback(hObject, eventdata, handles)
+% hObject    handle to listbox6 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns listbox6 contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from listbox6
+
+
+% --- Executes during object creation, after setting all properties.
+function listbox6_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to listbox6 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: listbox controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in addstimrecipe_button.
+function addstimrecipe_button_Callback(hObject, eventdata, handles)
+% hObject    handle to addstimrecipe_button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in resetrecipe_button.
+function resetrecipe_button_Callback(hObject, eventdata, handles)
+% hObject    handle to resetrecipe_button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in playrecipe_button.
+function playrecipe_button_Callback(hObject, eventdata, handles)
+% hObject    handle to playrecipe_button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
