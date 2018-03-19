@@ -22,7 +22,7 @@ function varargout = theodore(varargin)
 
 % Edit the above text to modify the response to help theodore
 
-% Last Modified by GUIDE v2.5 25-Feb-2018 17:09:30
+% Last Modified by GUIDE v2.5 09-Mar-2018 12:15:54
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -81,7 +81,8 @@ set(handles.axes1, 'xtick', [], 'ytick', [])
 
 set(handles.figure1,'CloseRequestFcn',[]);
 
-
+% Launch the recipe GUI for 2P
+recipe_2p_GUI
 
 % Update handles structure
 guidata(hObject, handles);
@@ -221,7 +222,7 @@ global playbackHz
 tic
 if handles.TTLcheck
 	disp('SENDING 2P DATA....')
-	sbudp = udp('131.215.25.182', 'RemotePort', 7000);
+	sbudp = udp('131.215.25.168', 'RemotePort', 7000);
 	fopen(sbudp)
 	pause(5); 
 	fprintf(sbudp, 'G'); 
@@ -398,7 +399,11 @@ function playbackSpeedText_Callback(hObject, eventdata, handles)
 % hObject    handle to playbackSpeedText (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+global playbackHz
 
+playbackHz = str2double(get(hObject,'String'));
+
+disp(sprintf('Set new playback speed to %d', playbackHz))
 % Hints: get(hObject,'String') returns contents of playbackSpeedText as text
 %        str2double(get(hObject,'String')) returns contents of playbackSpeedText as a double
 
@@ -992,120 +997,50 @@ function checkbox8_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of checkbox8
 
 
-% --- Executes on button press in pushbutton11.
-function pushbutton11_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton11 (see GCBO)
+% --- Executes on button press in but_runrecipe.
+function but_runrecipe_Callback(hObject, eventdata, handles)
+% hObject    handle to but_runrecipe (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 
-%%%%%%%%%%%%%%%%%%%%%%
-% 18CM Screen%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%
+global recipe_data
 
-%RF
-disp('Loading RF....')
-loadOutside('X:\MASTER_STIMULUS_FOLDER\18cm_screenDistance\cm18_Dario_RFstim_3000fr_og.mat', 4, hObject, eventdata, handles)
-goBut_Callback(hObject, eventdata, handles)
+nExperiment = size(recipe_data, 1);
 
-disp('Press any key to pause experiment.....')
-tic
-while toc<20 % seconds
-	disp('Pause, press any key to continue experiment...')
-	if KbCheck
-		pause
-	end
+
+i = 1;
+while i <= nExperiment
+    fn = recipe_data{i,1};
+    fr_rate = recipe_data{i,2};
+    loadOutside(fn, fr_rate, hObject, eventdata, handles)
+    goBut_Callback(hObject, eventdata, handles)
+
+    tic
+    fprintf('!!!!!! PRESS ANY KEY TO PAUSE EXPERIMENT ... !!!!!!!!')
+    ct = 0;
+    while toc<10 % seconds
+        if floor(toc)~=ct % This make a counter...
+            ct = floor(toc); fprintf(num2str(10-floor(toc)))
+        end
+        if KbCheck
+            quest = 'Experiment is currently paused, would you like to rerun, contiue, or exit?';
+            title = 'Theodore Paused'; defbtn = 'continue';
+            answer = questdlg(quest,title,'rerun','continue','exit',defbtn);
+            switch answer
+                case 'rerun'
+                    continue;
+                case 'continue'
+                    i = i+1; continue;
+                case 'exit'
+                    i = nExperiment+10; continue;%Exit condition
+            end
+        
+        end
+    end
+    
+    1 = i+1; % iterate counter
 end
-
-%RF CM noise
-disp('Loading RF CM noise....')
-loadOutside('X:\MASTER_STIMULUS_FOLDER\18cm_screenDistance\cm18_Dario_RFstim_500fr_CMnoise.mat', 28, hObject, eventdata, handles)
-goBut_Callback(hObject, eventdata, handles)
-
-disp('pausing...')
-
-disp('Press any key to pause experiment.....')
-tic
-while toc<10 % seconds
-	disp('Pause, press any key to continue experiment...')
-	if KbCheck
-		pause
-	end
-end
-
-%Moving Square 1
-disp('Loading Grating Moving Square 1....')
-loadOutside('X:\MASTER_STIMULUS_FOLDER\18cm_screenDistance\cm18_MovingSquares_Grating_128pos_640s.mat', 28, hObject, eventdata, handles)
-goBut_Callback(hObject, eventdata, handles)
-
-disp('Press any key to pause experiment.....')
-tic
-while toc<10 % seconds
-	disp('Pause, press any key to continue experiment...')
-	if KbCheck
-		pause
-	end
-end
-
-
-%Moving Square 2
-disp('Loading SimncelliNoise Moving Square....')
-loadOutside('X:\MASTER_STIMULUS_FOLDER\18cm_screenDistance\cm18_MovingSquares_SimoncelliNoise_128pos_640s.mat', 28, hObject, eventdata, handles)
-goBut_Callback(hObject, eventdata, handles)
-
-
-disp('Press any key to pause experiment.....')
-tic
-while toc<10 % seconds
-	disp('Pause, press any key to continue experiment...')
-	if KbCheck
-		pause
-	end
-end
-
-
-%Moving Square 3
-disp('Loading Grating Moving Square REVERSE....')
-loadOutside('X:\MASTER_STIMULUS_FOLDER\18cm_screenDistance\cm18_MovingSquares_GratingR_128pos_640s.mat', 28, hObject, eventdata, handles)
-goBut_Callback(hObject, eventdata, handles)
-
-disp('Press any key to pause experiment.....')
-tic
-while toc<10 % seconds
-	disp('Pause, press any key to continue experiment...')
-	if KbCheck
-		pause
-	end
-end
-
-
-%RF surround
-disp('Loading RF Surrund....')
-loadOutside('X:\MASTER_STIMULUS_FOLDER\18cm_screenDistance\cm18_RF_surround_28Hz_9size_10repeat.mat', 28, hObject, eventdata, handles)
-goBut_Callback(hObject, eventdata, handles)
-
-tic
-
-while toc<20 % seconds
-	disp('Pause, press any key to continue experiment...')
-	if KbCheck
-		pause
-	end
-end
-
-
-%HBO
-disp('Playing HBO movie')
-%optionPause(hObject, eventdata, handles)
-set(handles.editRepeats, 'String', '10')
-loadOutside('X:\MASTER_STIMULUS_FOLDER\Movie_HBO_30s.mat', 30, hObject, eventdata, handles)
-goBut_Callback(hObject, eventdata, handles)
-set(handles.editRepeats, 'String', '1')
-
-%Orientation
-disp('Playing Orientation Selectivity')
-loadOutside('X:\MASTER_STIMULUS_FOLDER\18cm_screenDistance\cm18_OrientationTuning.mat', 28, hObject, eventdata, handles)
-goBut_Callback(hObject, eventdata, handles)
 
 disp('DONE with all stimuli....')
 
