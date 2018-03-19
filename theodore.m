@@ -1029,9 +1029,9 @@ while i <= nExperiment
             answer = questdlg(quest,title,'rerun','continue','exit',defbtn);
             switch answer
                 case 'rerun'
-                    continue;
+                    continue; % Without iterating
                 case 'continue'
-                    i = i+1; continue;
+                    i = i+1; continue; % Iterate then move on
                 case 'exit'
                     i = nExperiment+10; continue;%Exit condition
             end
@@ -1039,7 +1039,7 @@ while i <= nExperiment
         end
     end
     
-    1 = i+1; % iterate counter
+    i = i+1; % iterate counter
 end
 
 disp('DONE with all stimuli....')
