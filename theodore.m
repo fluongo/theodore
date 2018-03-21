@@ -217,8 +217,11 @@ filtMode = 0; % Nearest interpolation
 
 nRepeats = str2num(get(handles.editRepeats, 'String'));
 
+global playbackHz fnPath
 
-global playbackHz
+disp(sprintf('File name which is being sent is %s', handles.fnPath))
+disp(sprintf('File name which is being sent is %s', fnPath))
+
 tic
 if handles.TTLcheck
 	disp('SENDING 2P DATA....')
@@ -228,9 +231,9 @@ if handles.TTLcheck
 	fprintf(sbudp, 'G'); 
 	pause(20)
 	try
-		fprintf(sbudp, ['M', handles.fnPath]);	
-	catch
-		global fnPath; fprintf(sbudp, ['M', fnPath]);	
+        fprintf(sbudp, ['M', fnPath]);
+    catch
+        fprintf(sbudp, ['M', handles.fnPath]);	
 	end
 	
 	fprintf(sbudp, sprintf('Mplayback of %d hz', playbackHz))
@@ -845,6 +848,7 @@ nRepeats = str2num(get(handles.RetinotopyNrepeats2P, 'String'));
 
 % Check if you are sending TTLs
 if handles.TTLcheck
+    
     s = serial('COM3');
     fopen(s);
 end
@@ -853,7 +857,7 @@ GUIhandle = gcf;
 
 % Load in the data for retinotopy
 %load('X:\stimulus_movies\widefield\retinotopicNiell.mat')
-load('X:\stimulus_movies\widefield\retinotopicNiell_10sec_NoBlank.mat')
+load('Z:\stimulus_movies\widefield\retinotopicNiell.mat')
 
 spherical = 1; % Always make spherical
 [window, windowRect] = TheodorePTBStartup2P(2, spherical);
@@ -1013,33 +1017,44 @@ i = 1;
 while i <= nExperiment
     fn = recipe_data{i,1};
     fr_rate = recipe_data{i,2};
-    loadOutside(fn, fr_rate, hObject, eventdata, handles)
+    handles = loadOutside(fn, fr_rate, hObject, eventdata, handles)
+    guidata(hObject, handles);
+
     goBut_Callback(hObject, eventdata, handles)
 
     tic
     fprintf('!!!!!! PRESS ANY KEY TO PAUSE EXPERIMENT ... !!!!!!!!')
-    ct = 0;
-    while toc<10 % seconds
-        if floor(toc)~=ct % This make a counter...
-            ct = floor(toc); fprintf(num2str(10-floor(toc)))
-        end
+    ct = 0; i = i+1; % iterate counter
+    h = msgbox('To pause, simply press any ke in the next %f seconds.')
+    set(findobj(h,'style','pushbutton'),'Visible','off')
+    while toc<20 % seconds
+        str = sprintf('To pause, simply press any ke in the next %d seconds.', 20-round(toc));
+        set(findobj(h,'Tag','MessageBox'),'String',str); % Send string to the text control on the GUI
+        drawnow;  % Force immediate update/refresh of the GUI.
         if KbCheck
             quest = 'Experiment is currently paused, would you like to rerun, contiue, or exit?';
             title = 'Theodore Paused'; defbtn = 'continue';
             answer = questdlg(quest,title,'rerun','continue','exit',defbtn);
             switch answer
                 case 'rerun'
-                    continue; % Without iterating
+                    i = i-1; continue; % Roll back counter
                 case 'continue'
-                    i = i+1; continue; % Iterate then move on
+                    continue; % Just move on since everything is fine
                 case 'exit'
-                    i = nExperiment+10; continue;%Exit condition
+                    i = nExperiment+100; continue;%Exit condition
             end
         
         end
     end
     
-    i = i+1; % iterate counter
+    % Close the figure if still open
+    try
+        close(h)
+    catch
+        continue
+    end
+       
+        
 end
 
 disp('DONE with all stimuli....')
@@ -1048,22 +1063,21 @@ disp('DONE with all stimuli....')
 
 
 
-function loadOutside(fn, framerate, hObject, eventdata, handles)
+function handles = loadOutside(fn, framerate, hObject, eventdata, handles)
 % Used for quickly loading in files same as the load button but as a
 % function
+%
+% Must return handles since it is nested...
+%
 
-[pathname,name,ext] = fileparts(fn) 
-handles.fn = [name, ext]
-handles.fnPath = fullfile(pathname, handles.fn)
+[pathname,name,ext] = fileparts(fn); 
+handles.fn = [name, ext];
+handles.fnPath = fullfile(pathname, handles.fn);
 global fnPath
-fnPath = handles.fnPath
-guidata(hObject, handles);
-
+fnPath = handles.fnPath;
 
 fnText_Callback(hObject, eventdata, handles)
 temp = load(fullfile(pathname, handles.fn));
-
-
 
 global moviedata
 try
@@ -1082,12 +1096,13 @@ set(handles.NframesText, 'String', sprintf('%d', nFrames))
 global playbackHz
 
 playbackHz = framerate;
-set(handles.playbackSpeedText, 'String', sprintf('%d', playbackHz))
+set(handles.playbackSpeedText, 'String', sprintf('%d', playbackHz));
 
-set(handles.DurationText, 'String', sprintf('%.3g MIN', nFrames/playbackHz/60))
+set(handles.DurationText, 'String', sprintf('%.3g MIN', nFrames/playbackHz/60));
 
-set(handles.loadingText, 'String', 'LOADED')
+set(handles.loadingText, 'String', 'LOADED');
 
+guidata(hObject, handles);
 
 
 function editRepeats_Callback(hObject, eventdata, handles)
