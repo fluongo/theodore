@@ -593,30 +593,31 @@ nRepeats = str2num(get(handles.textNtrials, 'String')); % Number of times to rep
 
 
 sca; PsychDefaultSetup(2); Screen('Preference', 'SkipSyncTests', 0); screens = Screen('Screens');
-screenNumber = 1%max(screens);
+screenNumber = max(screens);
 
 % Enter DEFCON HIGH PRIORITY and define colors
 priorityLevel=MaxPriority(screenNumber); Priority(priorityLevel);
 white = 255; black = 1;
 grey = white / 2;
 
-% Open an on screen window using PsychImaging and color it grey.
-Screen('Preference', 'SkipSyncTests', 1)
-[window, windowRect] = PsychImaging('OpenWindow', screenNumber, 0.5);
 
-PsychImaging('PrepareConfiguration');
-% configFile = 'C:\Users\KOFIKO3\AppData\Roaming\Psychtoolbox\GeometryCalibration\CSVCalibdata_1.mat'
-
-if get(handles.screenPosition, 'Value') == 1; % Left value
-    configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_1Mon.mat'
-elseif get(handles.screenPosition, 'Value') == 2; % Center value
-    configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_1Mon_Center.mat'
-end
-
-PsychImaging('AddTask', 'Allviews', 'GeometryCorrection', configFile);
+% 
+% PsychImaging('PrepareConfiguration');
+% % configFile = 'C:\Users\KOFIKO3\AppData\Roaming\Psychtoolbox\GeometryCalibration\CSVCalibdata_1.mat'
+% 
+% if get(handles.screenPosition, 'Value') == 1; % Left value
+%     configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_1Mon.mat'
+% elseif get(handles.screenPosition, 'Value') == 2; % Center value
+%     configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_1Mon_Center.mat'
+% end
+% 
+% PsychImaging('AddTask', 'Allviews', 'GeometryCorrection', configFile);
 
 % Standard window
-color = 0.5; rect = []; pixelsize = []; numBuffers = []; stereomode = 0;
+color = 0.5; 
+rect = [1279 0 1280*3 1024]; 
+%rect = [];
+pixelsize = []; numBuffers = []; stereomode = 0;
 [window, windowRect] = PsychImaging('OpenWindow', screenNumber, color, rect, pixelsize, numBuffers, stereomode);
 
 all_texturesH = zeros(1, size(allVertical,3)); all_texturesV = zeros(1, size(allVertical,3));
@@ -672,6 +673,7 @@ for j = 1:nRepeats
 end
 disp(sprintf('Elapsed time from all trials was .... %d and should have been %d', toc, nRepeats*10*2))
 % Clear the screen/close ports
+Screen('Close')
 sca
 
 
