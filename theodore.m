@@ -592,7 +592,8 @@ playbackHz = 30;
 nRepeats = str2num(get(handles.textNtrials, 'String')); % Number of times to repeat stimulus
 
 
-sca; PsychDefaultSetup(2); Screen('Preference', 'SkipSyncTests', 0); screens = Screen('Screens');
+sca; PsychDefaultSetup(0); 
+Screen('Preference', 'SkipSyncTests', 0); screens = Screen('Screens');
 screenNumber = max(screens);
 
 % Enter DEFCON HIGH PRIORITY and define colors
@@ -648,7 +649,7 @@ for j = 1:nRepeats
             fprintf(sWF,1)
         end
         
-        t = Screen('Flip', window, t + 1/playbackHz);
+        t = Screen('Flip', window, t + 1.5/playbackHz);
 
     end
 end
@@ -668,7 +669,7 @@ for j = 1:nRepeats
             fprintf(sWF,1)
         end
         
-        t = Screen('Flip', window, t + 1/playbackHz);
+        t = Screen('Flip', window, t + 1.5/playbackHz);
     end
 end
 disp(sprintf('Elapsed time from all trials was .... %d and should have been %d', toc, nRepeats*10*2))
