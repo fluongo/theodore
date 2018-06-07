@@ -586,8 +586,6 @@ global sWF
 flushinput(sWF)
 load('C:\Users\KOFIKO3\Desktop\New folder\retinotopicNiell.mat')
 %load('C:\Users\KOFIKO3\Desktop\New folder\Retinotopy_CM_noise_10sec_NoBlank.mat')
-
-
 playbackHz = 30;
 nRepeats = str2num(get(handles.textNtrials, 'String')); % Number of times to repeat stimulus
 
@@ -737,29 +735,37 @@ flushinput(sWF)
 
 sca; PsychDefaultSetup(2); Screen('Preference', 'SkipSyncTests', 1); screens = Screen('Screens');
 Screen('Preference', 'VisualDebugLevel', 1)
-screenNumber = 1 %max(screens);
+screenNumber = max(screens);
 
 % Enter DEFCON HIGH PRIORITY and define colors
 priorityLevel=MaxPriority(screenNumber); Priority(priorityLevel);
 white = 255; black = 1;
 grey = white / 2;
 
+% Standard window
+color = 0.5; 
+rect = [1279 0 1280*3 1024]; 
+%rect = [];
+pixelsize = []; numBuffers = []; stereomode = 0;
+[window, windowRect] = PsychImaging('OpenWindow', screenNumber, color, rect, pixelsize, numBuffers, stereomode);
+
+
 % Open an on screen window using PsychImaging and color it grey.
-[window, windowRect] = PsychImaging('OpenWindow', screenNumber, 0.5);
-if handles.Sphericalcheck == 1
-    PsychImaging('PrepareConfiguration');
-    % configFile = 'C:\Users\KOFIKO3\AppData\Roaming\Psychtoolbox\GeometryCalibration\CSVCalibdata_1.mat'
-    if get(handles.screenPosition, 'Value') == 1; % Left value
-        configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_1Mon.mat'
-    elseif get(handles.screenPosition, 'Value') == 2; % Center value
-        configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_1Mon_Center.mat'
-    else
-        return
-    end
-    PsychImaging('AddTask', 'Allviews', 'GeometryCorrection', configFile);
-else
-    disp('no spherical correction')
-end
+%[window, windowRect] = PsychImaging('OpenWindow', screenNumber, 0.5);
+% if handles.Sphericalcheck == 1
+%     PsychImaging('PrepareConfiguration');
+%     % configFile = 'C:\Users\KOFIKO3\AppData\Roaming\Psychtoolbox\GeometryCalibration\CSVCalibdata_1.mat'
+%     if get(handles.screenPosition, 'Value') == 1; % Left value
+%         configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_1Mon.mat'
+%     elseif get(handles.screenPosition, 'Value') == 2; % Center value
+%         configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_1Mon_Center.mat'
+%     else
+%         return
+%     end
+%     PsychImaging('AddTask', 'Allviews', 'GeometryCorrection', configFile);
+% else
+%     disp('no spherical correction')
+% end
 % Standard window
 color = 0.5; rect = []; pixelsize = []; numBuffers = []; stereomode = 0;
 [window, windowRect] = PsychImaging('OpenWindow', screenNumber, color, rect, pixelsize, numBuffers, stereomode);
