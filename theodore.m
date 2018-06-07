@@ -767,8 +767,8 @@ pixelsize = []; numBuffers = []; stereomode = 0;
 %     disp('no spherical correction')
 % end
 % Standard window
-color = 0.5; rect = []; pixelsize = []; numBuffers = []; stereomode = 0;
-[window, windowRect] = PsychImaging('OpenWindow', screenNumber, color, rect, pixelsize, numBuffers, stereomode);
+% color = 0.5; rect = []; pixelsize = []; numBuffers = []; stereomode = 0;
+% [window, windowRect] = PsychImaging('OpenWindow', screenNumber, color, rect, pixelsize, numBuffers, stereomode);
 
 all_textures = zeros(1, size(moviedata,3)); 
 
