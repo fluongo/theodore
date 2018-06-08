@@ -58,9 +58,14 @@ function theodore_OpeningFcn(hObject, eventdata, handles, varargin)
 
 sid = get(com.sun.security.auth.module.NTSystem,'DomainSID');
 if ~strcmp(sid, 'S-1-5-21-234047508-22126698-30228153')
-    global sWF
-    sWF = serial('COM3');
-    fopen(sWF)
+    try
+        global sWF
+        sWF = serial('COM3');
+        fopen(sWF)
+        disp('successfully opened widefield arduino')
+    catch
+        disp('Note that no arduino has been connected')
+    end
 end
    
 
