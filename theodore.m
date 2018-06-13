@@ -614,7 +614,7 @@ grey = white / 2;
 
 % Standard window
 color = 0.5; 
-rect = [1279 0 1280*3 1024]; 
+rect = [1279 1 1280*4 1024]; 
 %rect = [];
 pixelsize = []; numBuffers = []; stereomode = 0;
 [window, windowRect] = PsychImaging('OpenWindow', screenNumber, color, rect, pixelsize, numBuffers, stereomode);
@@ -733,7 +733,8 @@ global moviedata sWF
 
 flushinput(sWF)
 
-sca; PsychDefaultSetup(2); Screen('Preference', 'SkipSyncTests', 1); screens = Screen('Screens');
+sca; PsychDefaultSetup(1); 
+Screen('Preference', 'SkipSyncTests', 1); screens = Screen('Screens');
 Screen('Preference', 'VisualDebugLevel', 1)
 screenNumber = max(screens);
 
@@ -744,7 +745,11 @@ grey = white / 2;
 
 % Standard window
 color = 0.5; 
-rect = [1279 0 1280*3 1024]; 
+if get(handles.screenPosition, 'Value') == 1
+    rect = [1279 0 1280*3 1024]; 
+elseif get(handles.screenPosition, 'Value') == 2
+    rect = [1279 0 1280*4 1024];
+end
 %rect = [];
 pixelsize = []; numBuffers = []; stereomode = 0;
 [window, windowRect] = PsychImaging('OpenWindow', screenNumber, color, rect, pixelsize, numBuffers, stereomode);
@@ -785,6 +790,7 @@ playbackHz = str2num(get(handles.playbackSpeedText, 'String'))
 nRepeats = str2num(get(handles.widefieldRepeats, 'String'))
 
 t =  Screen('Flip', window); % Get flip time
+tic
 for kk = 1:nRepeats
     flushinput(sWF)
     for i = 1 :length(all_textures)
@@ -811,7 +817,7 @@ for kk = 1:nRepeats
 
     end
 end
-
+toc
 % Clear the screen/close ports
 sca
 
