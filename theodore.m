@@ -7,7 +7,7 @@ function varargout = theodore(varargin)
 %      the existing singleton*.
 %
 %      THEODORE('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in THEODORE.M with the given input arguments.
+%    function named CALLBACK in THEODOREth the given input arguments.
 %
 %      THEODORE('Property','Value',...) creates a new THEODORE or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
@@ -634,11 +634,12 @@ filtMode = 0; % Nearest interpolation
 nTex = length(all_texturesH); % Number of text
 
 tic
+    
+t =  Screen('Flip', window); % Get flip time
 for j = 1:nRepeats
-    flushinput(sWF)
     disp(sprintf('Horizontal Run %d out of %d', j, nRepeats))
     %update to a current flip time
-    t =  Screen('Flip', window); % Get flip time
+    flushinput(sWF)
     for i = 1 :nTex
         Screen('DrawTexture', window, all_texturesH(i), [], windowRect, [], filtMode);
         
@@ -655,10 +656,10 @@ end
 % Now do elevation
 
 for j = 1:nRepeats
-    flushinput(sWF)
     %update to a current flip time
     disp(sprintf('Vertical Run %d out of %d', j, nRepeats))
-    t =  Screen('Flip', window); % Get flip time
+    flushinput(sWF)
+
     for i = 1 :nTex
         Screen('DrawTexture', window, all_texturesV(i), [], windowRect, [], filtMode);
         
