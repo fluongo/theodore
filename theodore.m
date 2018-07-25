@@ -55,14 +55,17 @@ function theodore_OpeningFcn(hObject, eventdata, handles, varargin)
 % Identify compute and if it is not the 2P computer, then open widefield
 % serial
 
-
-sid = get(com.sun.security.auth.module.NTSystem,'DomainSID');
-if ~strcmp(sid, 'S-1-5-21-234047508-22126698-30228153')
-    global sWF
-    sWF = serial('COM3');
-    fopen(sWF)
+try
+    sid = get(com.sun.security.auth.module.NTSystem,'DomainSID');
+    if ~strcmp(sid, 'S-1-5-21-234047508-22126698-30228153')
+        global sWF
+        sWF = serial('COM3');
+        fopen(sWF)
+    end
+    handles.hasArduino = 1;
+catch
+    handles.hasArduino = 0;
 end
-   
 
 % Choose default command line output for theodore
 handles.output = hObject;
@@ -196,6 +199,7 @@ global moviedata sWF
 
 
 % Check if you are sending TTLs
+
 if handles.TTLcheck
 	if ~isempty(sWF)
 		if strcmp(sWF.Status, 'open')
@@ -586,10 +590,12 @@ function pushRunRetin_Callback(hObject, eventdata, handles)
 % hObject    handle to pushRunRetin (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+if handles.hasArduino
+    global sWF
+    flushinput(sWF)
+end
 
-global sWF
-flushinput(sWF)
-load('C:\Users\KOFIKO3\Desktop\New folder\retinotopicNiell.mat')
+load(fullfile(fileparts(which('theodore')), 'retinotopicNiell.mat'))
 %load('C:\Users\KOFIKO3\Desktop\New folder\Retinotopy_CM_noise_10sec_NoBlank.mat')
 playbackHz = 30;
 nRepeats = str2num(get(handles.textNtrials, 'String')); % Number of times to repeat stimulus
@@ -649,13 +655,19 @@ t =  Screen('Flip', window); % Get flip time
 for j = 1:nRepeats
     disp(sprintf('Horizontal Run %d out of %d', j, nRepeats))
     %update to a current flip time
-    flushinput(sWF)
+    
+    if handles.hasArduino
+        flushinput(sWF)
+    end
+    
     for i = 1 :nTex
         Screen('DrawTexture', window, all_texturesH(i), [], windowRect, [], filtMode);
         
         % send a ttl every 3rd frames
-        if mod(i,3) == 1
-            fprintf(sWF,1)
+        if handles.hasArduino
+            if mod(i,3) == 1
+                fprintf(sWF,1)
+            end
         end
         
         t = Screen('Flip', window, t + 1.5/playbackHz);
@@ -668,16 +680,19 @@ end
 for j = 1:nRepeats
     %update to a current flip time
     disp(sprintf('Vertical Run %d out of %d', j, nRepeats))
-    flushinput(sWF)
-
+    if handles.hasArduino
+        flushinput(sWF)
+    end
+    
     for i = 1 :nTex
         Screen('DrawTexture', window, all_texturesV(i), [], windowRect, [], filtMode);
         
         % send a ttl every 3rd frames
-        if mod(i,3) == 1
-            fprintf(sWF,1)
+        if handles.hasArduino
+            if mod(i,3) == 1
+                fprintf(sWF,1)
+            end
         end
-        
         t = Screen('Flip', window, t + 1.5/playbackHz);
     end
 end
