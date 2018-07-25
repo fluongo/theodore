@@ -22,7 +22,7 @@ function varargout = theodore(varargin)
 
 % Edit the above text to modify the response to help theodore
 
-% Last Modified by GUIDE v2.5 25-Feb-2018 17:09:30
+% Last Modified by GUIDE v2.5 25-Jul-2018 10:12:53
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -85,6 +85,11 @@ set(handles.figure1,'CloseRequestFcn',[]);
 
 % Update handles structure
 guidata(hObject, handles);
+
+
+% build globalRect
+rect_Callback(hObject, eventdata, handles); 
+
 
 % UIWAIT makes theodore wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
@@ -614,8 +619,13 @@ grey = white / 2;
 
 % Standard window
 color = 0.5; 
-rect = [1279 1 1280*4 1024]; 
-%rect = [];
+%rect = [1279 1 1280*4 1024]; 
+if sum(handles.globalRect) ~=0
+    rect = handles.globalRect;
+else
+    rect = [];
+end
+
 pixelsize = []; numBuffers = []; stereomode = 0;
 [window, windowRect] = PsychImaging('OpenWindow', screenNumber, color, rect, pixelsize, numBuffers, stereomode);
 
@@ -1235,3 +1245,22 @@ function playrecipe_button_Callback(hObject, eventdata, handles)
 % hObject    handle to playrecipe_button (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+
+
+function rect_Callback(hObject, eventdata, handles)
+% hObject    handle to rect_x0 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+handles.globalRect = [0 0 0 0];
+
+handles.globalRect(1) = str2double(get(handles.rect_x0, 'String'));
+handles.globalRect(2) = str2double(get(handles.rect_y0, 'String'));
+handles.globalRect(3) = str2double(get(handles.rect_x1, 'String'));
+handles.globalRect(4) = str2double(get(handles.rect_y1, 'String'));
+
+guidata(hObject, handles);
+
+% Hints: get(hObject,'String') returns contents of rect_x0 as text
+%        str2double(get(hObject,'String')) returns contents of rect_x0 as a double
