@@ -595,7 +595,13 @@ if handles.hasArduino
     flushinput(sWF)
 end
 
+
 load(fullfile(fileparts(which('theodore')), 'retinotopicNiell.mat'))
+
+% Version of slower retinotopy for ultrasound
+%load(fullfile(fileparts(which('theodore')), 'retinotopicNiell_60s.mat'))
+
+
 %load('C:\Users\KOFIKO3\Desktop\New folder\Retinotopy_CM_noise_10sec_NoBlank.mat')
 playbackHz = 30;
 nRepeats = str2num(get(handles.textNtrials, 'String')); % Number of times to repeat stimulus
@@ -888,8 +894,9 @@ end
 GUIhandle = gcf;
 
 % Load in the data for retinotopy
-%load('X:\stimulus_movies\widefield\retinotopicNiell.mat')
-load('X:\stimulus_movies\widefield\retinotopicNiell_10sec_NoBlank.mat')
+load('X:\stimulus_movies\widefield\retinotopicNiell.mat')
+% load('X:\stimulus_movies\widefield\retinotopicNiell_10sec_NoBlank.mat')
+
 
 spherical = 1; % Always make spherical
 [window, windowRect] = TheodorePTBStartup2P(2, spherical);
