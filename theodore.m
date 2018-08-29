@@ -631,7 +631,6 @@ grey = white / 2;
 
 % Standard window
 color = 0.5; 
-%rect = [1279 1 1280*4 1024]; 
 if sum(handles.globalRect) ~=0
     rect = handles.globalRect;
 else
@@ -708,15 +707,10 @@ Screen('Close')
 sca
 
 
-
 function edit15_Callback(hObject, eventdata, handles)
 % hObject    handle to edit15 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of edit15 as text
-%        str2double(get(hObject,'String')) returns contents of edit15 as a double
-
 
 % --- Executes during object creation, after setting all properties.
 function edit15_CreateFcn(hObject, eventdata, handles)
@@ -730,15 +724,10 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-
 function edit16_Callback(hObject, eventdata, handles)
 % hObject    handle to edit16 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of edit16 as text
-%        str2double(get(hObject,'String')) returns contents of edit16 as a double
 
 
 % --- Executes during object creation, after setting all properties.
@@ -777,12 +766,12 @@ grey = white / 2;
 
 % Standard window
 color = 0.5; 
-if get(handles.screenPosition, 'Value') == 1
-    rect = [1279 0 1280*3 1024]; 
-elseif get(handles.screenPosition, 'Value') == 2
-    rect = [1279 0 1280*4 1024];
+if sum(handles.globalRect) ~=0
+    rect = handles.globalRect;
+else
+    rect = [];
 end
-%rect = [];
+
 pixelsize = []; numBuffers = []; stereomode = 0;
 [window, windowRect] = PsychImaging('OpenWindow', screenNumber, color, rect, pixelsize, numBuffers, stereomode);
 
