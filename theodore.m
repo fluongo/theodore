@@ -22,7 +22,7 @@ function varargout = theodore(varargin)
 
 % Edit the above text to modify the response to help theodore
 
-% Last Modified by GUIDE v2.5 25-Jul-2018 10:12:53
+% Last Modified by GUIDE v2.5 29-Aug-2018 14:36:15
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -595,7 +595,6 @@ if handles.hasArduino
     flushinput(sWF)
 end
 
-
 load(fullfile(fileparts(which('theodore')), 'retinotopicNiell.mat'))
 
 % Version of slower retinotopy for ultrasound
@@ -644,6 +643,9 @@ nTex = length(all_texturesH); % Number of text
 tic
     
 t =  Screen('Flip', window); % Get flip time
+
+total_frame_cnt = 1; 
+
 for j = 1:nRepeats
     disp(sprintf('Horizontal Run %d out of %d', j, nRepeats))
     %update to a current flip time
@@ -662,7 +664,14 @@ for j = 1:nRepeats
             end
         end
         
-        t = Screen('Flip', window, t + 1.5/playbackHz);
+        % Do photodiode if necessary
+        if get(handles.checkbox_pd, 'Value') == 1
+            Screen('FillRect', window, mod(total_frame_cnt, 2)*[white white white], [0,0,20,20]);
+            total_frame_cnt = total_frame_cnt + 1;
+        end
+        
+        
+        t = Screen('Flip', window, t + 1/playbackHz);
 
     end
 end
@@ -685,7 +694,14 @@ for j = 1:nRepeats
                 fprintf(sWF,1)
             end
         end
-        t = Screen('Flip', window, t + 1.5/playbackHz);
+        
+        % Do photodiode if necessary
+        if get(handles.checkbox_pd, 'Value') == 1
+            Screen('FillRect', window, mod(total_frame_cnt, 2)*[white white white], [0,0,20,20]);
+            total_frame_cnt = total_frame_cnt + 1;
+        end
+                
+        t = Screen('Flip', window, t + 1/playbackHz);
     end
 end
 disp(sprintf('Elapsed time from all trials was .... %d and should have been %d', toc, nRepeats*10*2))
@@ -815,10 +831,6 @@ function widefieldRepeats_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of widefieldRepeats as text
-%        str2double(get(hObject,'String')) returns contents of widefieldRepeats as a double
-
-
 % --- Executes during object creation, after setting all properties.
 function widefieldRepeats_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to widefieldRepeats (see GCBO)
@@ -935,10 +947,6 @@ function RetinotopyNrepeats2P_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 
-% Hints: get(hObject,'String') returns contents of RetinotopyNrepeats2P as text
-%        str2double(get(hObject,'String')) returns contents of RetinotopyNrepeats2P as a double
-
-
 % --- Executes during object creation, after setting all properties.
 function RetinotopyNrepeats2P_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to RetinotopyNrepeats2P (see GCBO)
@@ -958,16 +966,12 @@ function checkbox7_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hint: get(hObject,'Value') returns toggle state of checkbox7
-
 
 % --- Executes on button press in checkbox8.
 function checkbox8_Callback(hObject, eventdata, handles)
 % hObject    handle to checkbox8 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of checkbox8
 
 
 function loadOutside(fn, framerate, hObject, eventdata, handles)
@@ -1095,3 +1099,12 @@ guidata(hObject, handles);
 
 % Hints: get(hObject,'String') returns contents of rect_x0 as text
 %        str2double(get(hObject,'String')) returns contents of rect_x0 as a double
+
+
+% --- Executes on button press in checkbox_pd.
+function checkbox_pd_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_pd (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_pd
