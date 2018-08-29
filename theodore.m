@@ -792,7 +792,11 @@ TTLeveryN = str2num(get(handles.edit16, 'String'))
 playbackHz = str2num(get(handles.playbackSpeedText, 'String'))
 nRepeats = str2num(get(handles.widefieldRepeats, 'String'))
 
+total_frame_cnt = 1; 
+
+
 t =  Screen('Flip', window); % Get flip time
+
 tic
 for kk = 1:nRepeats
     flushinput(sWF)
@@ -815,6 +819,12 @@ for kk = 1:nRepeats
         if KbCheck
 			break;
 		end;
+        
+        % Do photodiode if necessary
+        if get(handles.checkbox_pd, 'Value') == 1
+            Screen('FillRect', window, mod(total_frame_cnt, 2)*[white white white], [0,0,20,20]);
+            total_frame_cnt = total_frame_cnt + 1;
+        end
         
         t = Screen('Flip', window, t + 1/playbackHz);
 
@@ -893,6 +903,7 @@ end
 
 
 tic
+total_frame_cnt = 1;
 
 % Do two cases for whether you need to send a ttl or not
 for nn = 1:nRepeats % Horizontal
@@ -905,6 +916,14 @@ for nn = 1:nRepeats % Horizontal
 			fprintf(s,1)
 		end
 		Screen('DrawTexture', window, all_texturesH(i), [], windowRect, [], filtMode);
+        
+        
+        % Do photodiode if necessary
+        if get(handles.checkbox_pd, 'Value') == 1
+            Screen('FillRect', window, mod(total_frame_cnt, 2)*[white white white], [0,0,20,20]);
+            total_frame_cnt = total_frame_cnt + 1;
+        end
+        
 		t = Screen('Flip', window, t+1/playbackHz);
 	end
 end
@@ -919,6 +938,13 @@ for nn = 1:nRepeats % Vertical
 			fprintf(s,1)
 		end
 		Screen('DrawTexture', window, all_texturesV(i), [], windowRect, [], filtMode);
+        
+        % Do photodiode if necessary
+        if get(handles.checkbox_pd, 'Value') == 1
+            Screen('FillRect', window, mod(total_frame_cnt, 2)*[white white white], [0,0,20,20]);
+            total_frame_cnt = total_frame_cnt + 1;
+        end
+        
 		t = Screen('Flip', window, t+1/playbackHz);
 	end
 end
