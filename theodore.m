@@ -616,19 +616,6 @@ priorityLevel=MaxPriority(screenNumber); Priority(priorityLevel);
 white = 255; black = 1;
 grey = white / 2;
 
-
-% 
-% PsychImaging('PrepareConfiguration');
-% % configFile = 'C:\Users\KOFIKO3\AppData\Roaming\Psychtoolbox\GeometryCalibration\CSVCalibdata_1.mat'
-% 
-% if get(handles.screenPosition, 'Value') == 1; % Left value
-%     configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_1Mon.mat'
-% elseif get(handles.screenPosition, 'Value') == 2; % Center value
-%     configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_1Mon_Center.mat'
-% end
-% 
-% PsychImaging('AddTask', 'Allviews', 'GeometryCorrection', configFile);
-
 % Standard window
 color = 0.5; 
 if sum(handles.globalRect) ~=0
@@ -774,27 +761,6 @@ end
 
 pixelsize = []; numBuffers = []; stereomode = 0;
 [window, windowRect] = PsychImaging('OpenWindow', screenNumber, color, rect, pixelsize, numBuffers, stereomode);
-
-
-% Open an on screen window using PsychImaging and color it grey.
-%[window, windowRect] = PsychImaging('OpenWindow', screenNumber, 0.5);
-% if handles.Sphericalcheck == 1
-%     PsychImaging('PrepareConfiguration');
-%     % configFile = 'C:\Users\KOFIKO3\AppData\Roaming\Psychtoolbox\GeometryCalibration\CSVCalibdata_1.mat'
-%     if get(handles.screenPosition, 'Value') == 1; % Left value
-%         configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_1Mon.mat'
-%     elseif get(handles.screenPosition, 'Value') == 2; % Center value
-%         configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_1Mon_Center.mat'
-%     else
-%         return
-%     end
-%     PsychImaging('AddTask', 'Allviews', 'GeometryCorrection', configFile);
-% else
-%     disp('no spherical correction')
-% end
-% Standard window
-% color = 0.5; rect = []; pixelsize = []; numBuffers = []; stereomode = 0;
-% [window, windowRect] = PsychImaging('OpenWindow', screenNumber, color, rect, pixelsize, numBuffers, stereomode);
 
 all_textures = zeros(1, size(moviedata,3)); 
 
@@ -980,31 +946,6 @@ function RetinotopyNrepeats2P_CreateFcn(hObject, eventdata, handles)
 % handles    empty - handles not created until after all CreateFcns called
 
 % Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-% --- Executes on selection change in screenPosition.
-function screenPosition_Callback(hObject, eventdata, handles)
-% hObject    handle to screenPosition (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
-
-% Hints: contents = cellstr(get(hObject,'String')) returns screenPosition contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from screenPosition
-
-
-% --- Executes during object creation, after setting all properties.
-function screenPosition_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to screenPosition (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
