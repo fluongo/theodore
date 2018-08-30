@@ -1027,8 +1027,8 @@ while i <= nExperiment
     ct = 0; i = i+1; % iterate counter
     h = msgbox('To pause, simply press any ke in the next %f seconds.')
     set(findobj(h,'style','pushbutton'),'Visible','off')
-    while toc<20 % seconds
-        str = sprintf('To pause, simply press any ke in the next %d seconds.', 20-round(toc));
+    while toc<60 % seconds
+        str = sprintf('To pause, simply press any ke in the next %d seconds.', 60-round(toc));
         set(findobj(h,'Tag','MessageBox'),'String',str); % Send string to the text control on the GUI
         drawnow;  % Force immediate update/refresh of the GUI.
         if KbCheck
