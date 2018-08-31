@@ -671,7 +671,7 @@ for j = 1:nRepeats
         end
         
         
-        t = Screen('Flip', window, t + 1/playbackHz);
+        t = Screen('Flip', window, t + 1.5/playbackHz);
 
     end
 end
@@ -701,7 +701,7 @@ for j = 1:nRepeats
             total_frame_cnt = total_frame_cnt + 1;
         end
                 
-        t = Screen('Flip', window, t + 1/playbackHz);
+        t = Screen('Flip', window, t + 1.5/playbackHz);
     end
 end
 disp(sprintf('Elapsed time from all trials was .... %d and should have been %d', toc, nRepeats*10*2))
