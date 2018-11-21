@@ -871,7 +871,9 @@ end
 GUIhandle = gcf;
 
 % Load in the data for retinotopy
-load('X:\stimulus_movies\widefield\retinotopicNiell.mat')
+load(fullfile(fileparts(which('theodore')), 'retinotopicNiell.mat'))
+
+% load('X:\stimulus_movies\widefield\retinotopicNiell.mat')
 % load('X:\stimulus_movies\widefield\retinotopicNiell_10sec_NoBlank.mat')
 
 
