@@ -57,14 +57,21 @@ function theodore_OpeningFcn(hObject, eventdata, handles, varargin)
 
 try
     sid = get(com.sun.security.auth.module.NTSystem,'DomainSID');
-    if ~strcmp(sid, 'S-1-5-21-234047508-22126698-30228153')
+    if strcmp(sid, 'S-1-5-21-3407376716-2173853237-1507913917'); % Joe Rig
+        global sWF
+        sWF = serial('COM4');
+        fopen(sWF)
+        disp('Succesfully opened arduino on COM4')
+    else ~strcmp(sid, 'S-1-5-21-234047508-22126698-30228153'); % Old WF rig
         global sWF
         sWF = serial('COM3');
         fopen(sWF)
+        disp('Succesfully opened arduino on COM3')
     end
     handles.hasArduino = 1;
 catch
     handles.hasArduino = 0;
+    disp('Failed to open arduino')
 end
 
 % Choose default command line output for theodore
