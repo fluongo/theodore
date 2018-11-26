@@ -784,11 +784,12 @@ grey = white / 2;
 
 % Standard window
 color = 0.5; 
-if get(handles.screenPosition, 'Value') == 1
-    rect = [1279 0 1280*3 1024]; 
-elseif get(handles.screenPosition, 'Value') == 2
-    rect = [1279 0 1280*4 1024];
+if sum(handles.globalRect) ~=0
+    rect = handles.globalRect;
+else
+    rect = [];
 end
+
 %rect = [];
 pixelsize = []; numBuffers = []; stereomode = 0;
 [window, windowRect] = PsychImaging('OpenWindow', screenNumber, color, rect, pixelsize, numBuffers, stereomode);
