@@ -654,8 +654,8 @@ for i = 1 : size(allVertical, 3)
     if mod(i,100) == 0
         disp(sprintf('loaded frame %d', i));
     end
-    all_texturesV(i) = Screen('MakeTexture', window, double(allVertical(:,:,i)));
-    all_texturesH(i) = Screen('MakeTexture', window, double(allHorizontal(:,:,i)));
+    all_texturesV(i) = Screen('MakeTexture', window, allVertical(:,:,i));
+    all_texturesH(i) = Screen('MakeTexture', window, allHorizontal(:,:,i));
 end
 
 filtMode = 0; % Nearest interpolation
@@ -683,7 +683,7 @@ for j = 1:nRepeats
             end
         end
         
-        t = Screen('Flip', window, t + 1.5/playbackHz);
+        t = Screen('Flip', window, t + 1/playbackHz);
 
     end
 end
@@ -706,7 +706,7 @@ for j = 1:nRepeats
                 fprintf(sWF,1)
             end
         end
-        t = Screen('Flip', window, t + 1.5/playbackHz);
+        t = Screen('Flip', window, t + 1/playbackHz);
     end
 end
 disp(sprintf('Elapsed time from all trials was .... %d and should have been %d', toc, nRepeats*10*2))
@@ -793,27 +793,6 @@ end
 %rect = [];
 pixelsize = []; numBuffers = []; stereomode = 0;
 [window, windowRect] = PsychImaging('OpenWindow', screenNumber, color, rect, pixelsize, numBuffers, stereomode);
-
-
-% Open an on screen window using PsychImaging and color it grey.
-%[window, windowRect] = PsychImaging('OpenWindow', screenNumber, 0.5);
-% if handles.Sphericalcheck == 1
-%     PsychImaging('PrepareConfiguration');
-%     % configFile = 'C:\Users\KOFIKO3\AppData\Roaming\Psychtoolbox\GeometryCalibration\CSVCalibdata_1.mat'
-%     if get(handles.screenPosition, 'Value') == 1; % Left value
-%         configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_1Mon.mat'
-%     elseif get(handles.screenPosition, 'Value') == 2; % Center value
-%         configFile = 'Z:\\_PTB_startups\\NewUndistortionWF_config_1Mon_Center.mat'
-%     else
-%         return
-%     end
-%     PsychImaging('AddTask', 'Allviews', 'GeometryCorrection', configFile);
-% else
-%     disp('no spherical correction')
-% end
-% Standard window
-% color = 0.5; rect = []; pixelsize = []; numBuffers = []; stereomode = 0;
-% [window, windowRect] = PsychImaging('OpenWindow', screenNumber, color, rect, pixelsize, numBuffers, stereomode);
 
 all_textures = zeros(1, size(moviedata,3)); 
 
