@@ -254,7 +254,14 @@ if ~handles.TTLcheck
 	for ll = 1:nRepeats
 		for i = 1 :size(moviedata, 3)
 			Screen('DrawTexture', window, all_textures(i), [], windowRect, [], filtMode);
-			t = Screen('Flip', window, t+1/playbackHz);
+            
+            % Do photodiode if necessary
+            if get(handles.checkbox_pd, 'Value') == 1
+                Screen('FillRect', window, mod(total_frame_cnt, 2)*[white white white], [0,0,20,20]);
+                total_frame_cnt = total_frame_cnt + 1;
+            end
+            
+            t = Screen('Flip', window, t+1/playbackHz);
 			if KbCheck
 				break;
 			end;
@@ -266,8 +273,15 @@ else
 		for i = 1 :size(moviedata, 3)
 			fprintf(s,1)
 			Screen('DrawTexture', window, all_textures(i), [], windowRect, [], filtMode);
+            
+            % Do photodiode if necessary
+            if get(handles.checkbox_pd, 'Value') == 1
+                Screen('FillRect', window, mod(total_frame_cnt, 2)*[white white white], [0,0,20,20]);
+                total_frame_cnt = total_frame_cnt + 1;
+            end
+            
 			t = Screen('Flip', window, t+1/playbackHz);
-
+            
 			if mod(i,500) == 499
 				flushinput(s)
 			end
@@ -877,7 +891,7 @@ load(fullfile(fileparts(which('theodore')), 'retinotopicNiell.mat'))
 % load('X:\stimulus_movies\widefield\retinotopicNiell_10sec_NoBlank.mat')
 
 
-spherical = 1; % Always make spherical
+spherical = 0; % Always make spherical
 [window, windowRect] = TheodorePTBStartup2P(2, spherical);
 
 all_texturesH = PTBprepTextures(allHorizontal, window);
@@ -918,7 +932,6 @@ for nn = 1:nRepeats % Horizontal
 			fprintf(s,1)
 		end
 		Screen('DrawTexture', window, all_texturesH(i), [], windowRect, [], filtMode);
-        
         
         % Do photodiode if necessary
         if get(handles.checkbox_pd, 'Value') == 1
