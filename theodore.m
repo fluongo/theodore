@@ -22,7 +22,7 @@ function varargout = theodore(varargin)
 
 % Edit the above text to modify the response to help theodore
 
-% Last Modified by GUIDE v2.5 29-Aug-2018 14:36:15
+% Last Modified by GUIDE v2.5 29-Nov-2018 15:49:46
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -84,14 +84,26 @@ set(handles.axes1, 'xtick', [], 'ytick', [])
 
 set(handles.figure1,'CloseRequestFcn',[]);
 
+% build globalRect
+rect_Callback(hObject, eventdata, handles); 
+
+% Here we call some default settings for setting up Psychtoolbox
+PsychDefaultSetup(2);
+Screen('Preference', 'SkipSyncTests', 1); 
+screens = Screen('Screens');
+screenNumber = 2 %max(screens);
+
+Screen('Preference', 'VisualDebugLevel', 1);
+% Need to re-add in the spherical part if we need it
+
+% Standard window
+color = 0.5; rect = []; pixelsize = []; numBuffers = []; stereomode = 0;
+[handles.window, handles.windowRect] = PsychImaging('OpenWindow', screenNumber, color, rect, pixelsize, numBuffers, stereomode);
 
 
 % Update handles structure
 guidata(hObject, handles);
 
-
-% build globalRect
-rect_Callback(hObject, eventdata, handles); 
 
 
 % UIWAIT makes theodore wait for user response (see UIRESUME)
@@ -150,8 +162,6 @@ set(handles.DurationText, 'String', sprintf('%.3g MIN', nFrames/playbackHz/60))
 set(handles.loadingText, 'String', 'LOADED')
 
 
-
-
 function fnText_Callback(hObject, eventdata, handles)
 % hObject    handle to fnText (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -197,112 +207,48 @@ function goBut_Callback(hObject, eventdata, handles)
 % Startup PTB and prepare the textures...
 global moviedata sWF
 
-
 % Check if you are sending TTLs
-
-if handles.TTLcheck
-	if ~isempty(sWF)
-		if strcmp(sWF.Status, 'open')
-			fclose(sWF)
-		end
-	end
-    s = serial('COM3');
-    fopen(s);
-end
 
 GUIhandle = gcf;
 
-[window, windowRect] = TheodorePTBStartup2P(2, handles.Sphericalcheck);
+%[window, windowRect] = TheodorePTBStartup2P(2, handles.Sphericalcheck);
 
+all_textures = PTBprepTextures(moviedata, handles.window);
 
-if isa(moviedata, 'single')
-	moviedata = double(moviedata);
-end
-all_textures = PTBprepTextures(moviedata, window);
-
-t =  Screen('Flip', window); % Get flip time
+t =  Screen('Flip', handles.window); % Get flip time
 filtMode = 0; % Nearest interpolation
 
 nRepeats = str2num(get(handles.editRepeats, 'String'));
 
-
 global playbackHz
+
+% Set var for photodiode
+total_frame_cnt = 1;
+white= 255; % Value for white
+
 tic
-if handles.TTLcheck
-	disp('SENDING 2P DATA....')
-	sbudp = udp('131.215.25.182', 'RemotePort', 7000);
-	fopen(sbudp)
-	pause(5); 
-	fprintf(sbudp, 'G'); 
-	pause(20)
-	try
-		fprintf(sbudp, ['M', handles.fnPath]);	
-	catch
-		global fnPath; fprintf(sbudp, ['M', fnPath]);	
-	end
-	
-	fprintf(sbudp, sprintf('Mplayback of %d hz', playbackHz))
-	if handles.Sphericalcheck
-		fprintf(sbudp, ['M', 'spherical correction applied to stimulus'])
-	end
-end
 
-% Do two cases for whether you need to send a ttl or not
+for ll = 1:nRepeats
+    for i = 1 :size(moviedata, 3)
+        Screen('DrawTexture', handles.window, all_textures(i), [], handles.windowRect, [], filtMode);
 
-if ~handles.TTLcheck
-	
-	for ll = 1:nRepeats
-		for i = 1 :size(moviedata, 3)
-			Screen('DrawTexture', window, all_textures(i), [], windowRect, [], filtMode);
-            
-            % Do photodiode if necessary
-            if get(handles.checkbox_pd, 'Value') == 1
-                Screen('FillRect', window, mod(total_frame_cnt, 2)*[white white white], [0,0,20,20]);
-                total_frame_cnt = total_frame_cnt + 1;
-            end
-            
-            t = Screen('Flip', window, t+1/playbackHz);
-			if KbCheck
-				break;
-			end;
-		end
-	end
-	
-else
-	for ll = 1:nRepeats
-		for i = 1 :size(moviedata, 3)
-			fprintf(s,1)
-			Screen('DrawTexture', window, all_textures(i), [], windowRect, [], filtMode);
-            
-            % Do photodiode if necessary
-            if get(handles.checkbox_pd, 'Value') == 1
-                Screen('FillRect', window, mod(total_frame_cnt, 2)*[white white white], [0,0,20,20]);
-                total_frame_cnt = total_frame_cnt + 1;
-            end
-            
-			t = Screen('Flip', window, t+1/playbackHz);
-            
-			if mod(i,500) == 499
-				flushinput(s)
-			end
+        % Do photodiode if necessary
+        if get(handles.checkbox_pd, 'Value') == 1
+            Screen('FillRect', handles.window, mod(total_frame_cnt, 2)*[white white white], [0,0,str2num(get(handles.pd_size, 'String')),str2num(get(handles.pd_size, 'String'))]);
+            total_frame_cnt = total_frame_cnt + 1;
+        end
 
-			if KbCheck
-				break;
-			end;
-		end
-	end
-	fclose(s)
-end
-
-if handles.TTLcheck
-	pause(2)
-	fprintf(sbudp, 'S')
-	pause(10)
-	fclose(sbudp)
+        t = Screen('Flip', handles.window, t+1/playbackHz);
+        if KbCheck
+            break;
+        end;
+    end
 end
 
 % Clear the screen/close ports
-Screen('CloseAll')
+Screen('FillRect', handles.window , white/2, handles.windowRect);
+t = Screen('Flip', handles.window)
+ 
 playbackHz
 disp(sprintf('elapsed time was %4.4f seconds and should have been %4.4f', toc, size(moviedata, 3)/playbackHz))
 
@@ -1149,3 +1095,26 @@ function checkbox_pd_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox_pd
+
+
+
+function pd_size_Callback(hObject, eventdata, handles)
+% hObject    handle to pd_size (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of pd_size as text
+%        str2double(get(hObject,'String')) returns contents of pd_size as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function pd_size_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to pd_size (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
