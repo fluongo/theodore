@@ -97,8 +97,8 @@ Screen('Preference', 'VisualDebugLevel', 1);
 % Need to re-add in the spherical part if we need it
 
 % Standard window
-color = 0.5; rect = []; pixelsize = []; numBuffers = []; stereomode = 0;
-[handles.window, handles.windowRect] = PsychImaging('OpenWindow', screenNumber, color, rect, pixelsize, numBuffers, stereomode);
+handles.bg_color = 0.5; rect = []; pixelsize = []; numBuffers = []; stereomode = 0;
+[handles.window, handles.windowRect] = PsychImaging('OpenWindow', screenNumber, handles.bg_color, rect, pixelsize, numBuffers, stereomode);
 
 % Update handles structure
 guidata(hObject, handles);
@@ -248,7 +248,7 @@ for ll = 1:nRepeats
 end
 
 % Clear the screen/close ports
-Screen('FillRect', handles.window , white/2, handles.windowRect);
+Screen('FillRect', handles.window , handles.bg_color, handles.windowRect);
 t = Screen('Flip', handles.window)
  
 playbackHz
@@ -519,9 +519,9 @@ for i = 1 :length(all_textures)
 end
 
 % Clear the screen/close ports
-Screen('FillRect', handles.window , 128, handles.windowRect);
+Screen('FillRect', handles.window , handles.bg_color, handles.windowRect);
 t = Screen('Flip', handles.window)
-
+disp('finished mouse chase')
 
 
 
