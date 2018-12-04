@@ -479,27 +479,23 @@ function mouseChase_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 playbackHz = 10
-[window, windowRect] = TheodorePTBStartup2P(2, handles.Sphericalcheck);
 tempMovieData =  0.5*ones(9,16,4000);
 
-all_textures = PTBprepTextures(tempMovieData, window);
-
+all_textures = PTBprepTextures(tempMovieData, handles.window);
 % Standard window
-screenNumber = 2;
-color = 0.5; rect = []; pixelsize = []; numBuffers = []; stereomode = 0;
-[window, windowRect] = PsychImaging('OpenWindow', screenNumber, color, rect, pixelsize, numBuffers, stereomode);
-theX = round(windowRect(RectRight) / 2); theY = round(windowRect(RectBottom) / 2);
+theX = round(handles.windowRect(RectRight) / 2); theY = round(handles.windowRect(RectBottom) / 2);
 
 
-t =  Screen('Flip', window); % Get flip time
+t =  Screen('Flip', handles.window); % Get flip time
 filtMode = 0; % Nearest interpolation
 % Stuff for setting mouse...
-SetMouse(theX,theY,screenNumber); HideCursor;
+screenNumber = 2;
+SetMouse(theX,theY, screenNumber); HideCursor;
 
 % Create a single gaussian transparency mask and store it to a texture:
 texsize = 150; mask=ones(texsize, texsize) * 1;
 
-masktex1=Screen('MakeTexture', window, mask); masktex2=Screen('MakeTexture', window, mask-1);
+masktex1=Screen('MakeTexture', handles.window, mask); masktex2=Screen('MakeTexture', handles.window, mask-1);
 
 for i = 1 :length(all_textures)
 	% On each iteration simply draw it with a gaussian mask centere on a
@@ -508,24 +504,24 @@ for i = 1 :length(all_textures)
 	% myrect must be redfined using the mouse position at each frame
 	[mx, my, buttons]=GetMouse(screenNumber);
 	
-	Screen('DrawTexture', window, all_textures(i), [], windowRect, [], filtMode);
+	Screen('DrawTexture', handles.window, all_textures(i), [], handles.windowRect, [], filtMode);
 	% Code below will animate it to flashing
 	if mod(i,2) == 0
-		Screen('DrawTexture', window, masktex1, [], [mx-texsize my-texsize mx+texsize my+texsize]);
+		Screen('DrawTexture', handles.window, masktex1, [], [mx-texsize my-texsize mx+texsize my+texsize]);
 	else
-		Screen('DrawTexture', window, masktex2, [], [mx-texsize my-texsize mx+texsize my+texsize]);
+		Screen('DrawTexture', handles.window, masktex2, [], [mx-texsize my-texsize mx+texsize my+texsize]);
 	end
 	
-	t = Screen('Flip', window, t+1/playbackHz);
+	t = Screen('Flip', handles.window, t+1/playbackHz);
 	if KbCheck
 		break;
 	end;
 end
 
-set(handles.loadingText, 'String', ' ')
-
 % Clear the screen/close ports
-Screen('CloseAll');
+Screen('FillRect', handles.window , 128, handles.windowRect);
+t = Screen('Flip', handles.window)
+
 
 
 
