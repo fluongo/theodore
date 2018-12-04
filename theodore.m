@@ -22,7 +22,7 @@ function varargout = theodore(varargin)
 
 % Edit the above text to modify the response to help theodore
 
-% Last Modified by GUIDE v2.5 09-Mar-2018 12:15:54
+% Last Modified by GUIDE v2.5 03-Dec-2018 16:38:02
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -984,7 +984,7 @@ while i <= nExperiment
     ct = 0; i = i+1; % iterate counter
     h = msgbox('To pause, simply press any ke in the next %f seconds.')
     set(findobj(h,'style','pushbutton'),'Visible','off')
-    while toc<60 % seconds
+    while toc<20 % seconds
         str = sprintf('To pause, simply press any ke in the next %d seconds.', 60-round(toc));
         set(findobj(h,'Tag','MessageBox'),'String',str); % Send string to the text control on the GUI
         drawnow;  % Force immediate update/refresh of the GUI.
@@ -998,7 +998,7 @@ while i <= nExperiment
                 case 'continue'
                     continue; % Just move on since everything is fine
                 case 'exit'
-                    i = nExperiment+100; continue;%Exit condition
+                    i = nExperiment+100; break;%Exit condition
             end
         
         end
@@ -1010,13 +1010,12 @@ while i <= nExperiment
     catch
         continue
     end
-       
+end
         
 
 function handles = loadOutside(fn, framerate, hObject, eventdata, handles)
 % Used for quickly loading in files same as the load button but as a
 % function
-%
 % Must return handles since it is nested...
 %
 
@@ -1099,29 +1098,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-% --- Executes on button press in addstimrecipe_button.
-function addstimrecipe_button_Callback(hObject, eventdata, handles)
-% hObject    handle to addstimrecipe_button (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
-% --- Executes on button press in resetrecipe_button.
-function resetrecipe_button_Callback(hObject, eventdata, handles)
-% hObject    handle to resetrecipe_button (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
-% --- Executes on button press in playrecipe_button.
-function playrecipe_button_Callback(hObject, eventdata, handles)
-% hObject    handle to playrecipe_button (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
-
 function rect_Callback(hObject, eventdata, handles)
 % hObject    handle to rect_x0 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -1164,9 +1140,3 @@ function pd_size_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to pd_size (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
