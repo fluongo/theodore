@@ -35,7 +35,7 @@ function [ window, windowRect ] = TheodorePTBStartup2P( ScreenNumber , spherical
 	if sphericalCheck
 		PsychImaging('PrepareConfiguration');
 		%PsychImaging('AddTask', 'Allviews', 'GeometryCorrection', 'X:\_PTB_startups\NewUndistortionWF_config_1Mon.mat');
-		PsychImaging('AddTask', 'Allviews', 'GeometryCorrection', 'X:\_PTB_startups\2P_SideConfig_27cm.mat');
+		PsychImaging('AddTask', 'Allviews', 'GeometryCorrection', 'Z:\_PTB_startups\2P_SideConfig_27cm.mat');
 	end
 	
 	

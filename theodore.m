@@ -22,7 +22,7 @@ function varargout = theodore(varargin)
 
 % Edit the above text to modify the response to help theodore
 
-% Last Modified by GUIDE v2.5 29-Nov-2018 15:49:46
+% Last Modified by GUIDE v2.5 09-Mar-2018 12:15:54
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -84,8 +84,8 @@ set(handles.axes1, 'xtick', [], 'ytick', [])
 
 set(handles.figure1,'CloseRequestFcn',[]);
 
-% build globalRect
-rect_Callback(hObject, eventdata, handles); 
+% Launch the recipe GUI for 2P
+recipe_2p_GUI
 
 % Here we call some default settings for setting up Psychtoolbox
 PsychDefaultSetup(2);
@@ -99,7 +99,6 @@ Screen('Preference', 'VisualDebugLevel', 1);
 % Standard window
 color = 0.5; rect = []; pixelsize = []; numBuffers = []; stereomode = 0;
 [handles.window, handles.windowRect] = PsychImaging('OpenWindow', screenNumber, color, rect, pixelsize, numBuffers, stereomode);
-
 
 % Update handles structure
 guidata(hObject, handles);
@@ -220,7 +219,10 @@ filtMode = 0; % Nearest interpolation
 
 nRepeats = str2num(get(handles.editRepeats, 'String'));
 
-global playbackHz
+global playbackHz fnPath
+
+disp(sprintf('File name which is being sent is %s', handles.fnPath))
+disp(sprintf('File name which is being sent is %s', fnPath))
 
 % Set var for photodiode
 total_frame_cnt = 1;
@@ -367,7 +369,11 @@ function playbackSpeedText_Callback(hObject, eventdata, handles)
 % hObject    handle to playbackSpeedText (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+global playbackHz
 
+playbackHz = str2double(get(hObject,'String'));
+
+disp(sprintf('Set new playback speed to %d', playbackHz))
 % Hints: get(hObject,'String') returns contents of playbackSpeedText as text
 %        str2double(get(hObject,'String')) returns contents of playbackSpeedText as a double
 
@@ -824,6 +830,7 @@ nRepeats = str2num(get(handles.RetinotopyNrepeats2P, 'String'));
 
 % Check if you are sending TTLs
 if handles.TTLcheck
+    
     s = serial('COM3');
     fopen(s);
 end
@@ -834,7 +841,7 @@ GUIhandle = gcf;
 load(fullfile(fileparts(which('theodore')), 'retinotopicNiell.mat'))
 
 % load('X:\stimulus_movies\widefield\retinotopicNiell.mat')
-% load('X:\stimulus_movies\widefield\retinotopicNiell_10sec_NoBlank.mat')
+load('Z:\stimulus_movies\widefield\retinotopicNiell.mat')
 
 
 spherical = 0; % Always make spherical
@@ -960,23 +967,67 @@ function checkbox8_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+% --- Executes on button press in but_runrecipe.
+function but_runrecipe_Callback(hObject, eventdata, handles)
+% hObject    handle to but_runrecipe (see GCBO)
+global recipe_data
+nExperiment = size(recipe_data, 1);
+i = 1;
+while i <= nExperiment
+    fn = recipe_data{i,1};
+    fr_rate = recipe_data{i,2};
+    handles = loadOutside(fn, fr_rate, hObject, eventdata, handles)
+    guidata(hObject, handles);
+    goBut_Callback(hObject, eventdata, handles)
+    tic
+    fprintf('!!!!!! PRESS ANY KEY TO PAUSE EXPERIMENT ... !!!!!!!!')
+    ct = 0; i = i+1; % iterate counter
+    h = msgbox('To pause, simply press any ke in the next %f seconds.')
+    set(findobj(h,'style','pushbutton'),'Visible','off')
+    while toc<60 % seconds
+        str = sprintf('To pause, simply press any ke in the next %d seconds.', 60-round(toc));
+        set(findobj(h,'Tag','MessageBox'),'String',str); % Send string to the text control on the GUI
+        drawnow;  % Force immediate update/refresh of the GUI.
+        if KbCheck
+            quest = 'Experiment is currently paused, would you like to rerun, contiue, or exit?';
+            title = 'Theodore Paused'; defbtn = 'continue';
+            answer = questdlg(quest,title,'rerun','continue','exit',defbtn);
+            switch answer
+                case 'rerun'
+                    i = i-1; continue; % Roll back counter
+                case 'continue'
+                    continue; % Just move on since everything is fine
+                case 'exit'
+                    i = nExperiment+100; continue;%Exit condition
+            end
+        
+        end
+    end
+    
+    % Close the figure if still open
+    try
+        close(h)
+    catch
+        continue
+    end
+       
+        
 
-function loadOutside(fn, framerate, hObject, eventdata, handles)
+function handles = loadOutside(fn, framerate, hObject, eventdata, handles)
 % Used for quickly loading in files same as the load button but as a
 % function
+%
+% Must return handles since it is nested...
+%
 
-[pathname,name,ext] = fileparts(fn) 
-handles.fn = [name, ext]
-handles.fnPath = fullfile(pathname, handles.fn)
+[pathname,name,ext] = fileparts(fn); 
+handles.fn = [name, ext];
+handles.fnPath = fullfile(pathname, handles.fn);
 global fnPath
-fnPath = handles.fnPath
-guidata(hObject, handles);
-
+fnPath = handles.fnPath;
 
 fnText_Callback(hObject, eventdata, handles)
 temp = load(fullfile(pathname, handles.fn));
-
-
 
 global moviedata
 try
@@ -995,12 +1046,13 @@ set(handles.NframesText, 'String', sprintf('%d', nFrames))
 global playbackHz
 
 playbackHz = framerate;
-set(handles.playbackSpeedText, 'String', sprintf('%d', playbackHz))
+set(handles.playbackSpeedText, 'String', sprintf('%d', playbackHz));
 
-set(handles.DurationText, 'String', sprintf('%.3g MIN', nFrames/playbackHz/60))
+set(handles.DurationText, 'String', sprintf('%.3g MIN', nFrames/playbackHz/60));
 
-set(handles.loadingText, 'String', 'LOADED')
+set(handles.loadingText, 'String', 'LOADED');
 
+guidata(hObject, handles);
 
 
 function editRepeats_Callback(hObject, eventdata, handles)
