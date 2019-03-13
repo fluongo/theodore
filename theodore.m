@@ -828,10 +828,10 @@ for kk = 1:nRepeats
             end
         end
         
-        if KbCheck
-			break;
-		end;
-        
+%         if KbCheck
+%             break;
+% 		end;
+%         
         t = Screen('Flip', window, t + 1/playbackHz);
 
     end
