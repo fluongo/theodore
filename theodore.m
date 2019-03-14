@@ -97,12 +97,15 @@ Screen('Preference', 'VisualDebugLevel', 1);
 % Need to re-add in the spherical part if we need it
 
 % Standard window
-handles.bg_color = 0.5; rect = []; pixelsize = []; numBuffers = []; stereomode = 0;
+handles.bg_color = 0.01;  % Make it pretty black..
+rect = []; pixelsize = []; numBuffers = []; stereomode = 0;
 [handles.window, handles.windowRect] = PsychImaging('OpenWindow', screenNumber, handles.bg_color, rect, pixelsize, numBuffers, stereomode);
 
 % Update handles structure
 guidata(hObject, handles);
 
+global stim_log
+stim_log = []
 
 
 % UIWAIT makes theodore wait for user response (see UIRESUME)
@@ -212,6 +215,12 @@ GUIhandle = gcf;
 
 %[window, windowRect] = TheodorePTBStartup2P(2, handles.Sphericalcheck);
 
+% Check if moviedata is uint8 and convert if not
+if ~isa(moviedata, 'uint8')
+    moviedata = moviedata - min(moviedata(:));
+    moviedata = uint8(255*moviedata/max(moviedata(:)));
+end
+
 all_textures = PTBprepTextures(moviedata, handles.window);
 
 t =  Screen('Flip', handles.window); % Get flip time
@@ -222,13 +231,17 @@ nRepeats = str2num(get(handles.editRepeats, 'String'));
 global playbackHz fnPath
 
 disp(sprintf('File name which is being sent is %s', handles.fnPath))
-disp(sprintf('File name which is being sent is %s', fnPath))
+
+ShowCursor()% Makes sure that the cursor is till usable
 
 % Set var for photodiode
 total_frame_cnt = 1;
+
 white= 255; % Value for white
 
 tic
+
+completed_var = 1;
 
 for ll = 1:nRepeats
     for i = 1 :size(moviedata, 3)
@@ -242,7 +255,11 @@ for ll = 1:nRepeats
 
         t = Screen('Flip', handles.window, t+1/playbackHz);
         if KbCheck
-            break;
+            [keyIsDown, secs, keyCode, deltaSecs] = KbCheck();
+            if find(keyCode) == 27; % Corresponds to escape key for exit
+                completed_var = 0
+                break;
+            end
         end;
     end
 end
@@ -250,7 +267,22 @@ end
 % Clear the screen/close ports
 Screen('FillRect', handles.window , handles.bg_color, handles.windowRect);
 t = Screen('Flip', handles.window)
- 
+
+% Write everything to the log
+global stim_log
+if isempty(stim_log)
+    stim_log.fn = handles.fnPath;
+    stim_log.playback_hz = playbackHz;
+    stim_log.completed = completed_var;
+    stim_log.nRepeats = nRepeats;
+else
+    idx = length(stim_log)
+    stim_log(idx+1).fn = handles.fnPath;
+    stim_log(idx+1).playback_hz = playbackHz
+    stim_log(idx+1).completed = completed_var;
+    stim_log(idx+1).nRepeats = nRepeats;
+end
+
 playbackHz
 disp(sprintf('elapsed time was %4.4f seconds and should have been %4.4f', toc, size(moviedata, 3)/playbackHz))
 
@@ -378,19 +410,6 @@ disp(sprintf('Set new playback speed to %d', playbackHz))
 %        str2double(get(hObject,'String')) returns contents of playbackSpeedText as a double
 
 
-% --- Executes during object creation, after setting all properties.
-function playbackSpeedText_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to playbackSpeedText (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
 
 function edit5_Callback(hObject, eventdata, handles)
 % hObject    handle to edit5 (see GCBO)
@@ -484,7 +503,6 @@ tempMovieData =  0.5*ones(9,16,4000);
 all_textures = PTBprepTextures(tempMovieData, handles.window);
 % Standard window
 theX = round(handles.windowRect(RectRight) / 2); theY = round(handles.windowRect(RectBottom) / 2);
-
 
 t =  Screen('Flip', handles.window); % Get flip time
 filtMode = 0; % Nearest interpolation
