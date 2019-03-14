@@ -22,7 +22,7 @@ function varargout = theodore(varargin)
 
 % Edit the above text to modify the response to help theodore
 
-% Last Modified by GUIDE v2.5 25-Jul-2018 10:12:53
+% Last Modified by GUIDE v2.5 13-Mar-2019 17:12:06
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -455,52 +455,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-
-function edit6_Callback(hObject, eventdata, handles)
-% hObject    handle to edit6 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of edit6 as text
-%        str2double(get(hObject,'String')) returns contents of edit6 as a double
-
-
-% --- Executes during object creation, after setting all properties.
-function edit6_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit6 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-
-function edit7_Callback(hObject, eventdata, handles)
-% hObject    handle to edit7 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of edit7 as text
-%        str2double(get(hObject,'String')) returns contents of edit7 as a double
-
-
-% --- Executes during object creation, after setting all properties.
-function edit7_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit7 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
 % --- Executes on button press in check2Psend.
 function check2Psend_Callback(hObject, eventdata, handles)
 % hObject    handle to check2Psend (see GCBO)
@@ -760,6 +714,43 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
+function open_server(hObject, eventdata, handles)
+try
+    handles.sb_server = udp(get(handles.server_ip, 'String'),'RemotePort', 7000);
+    fopen(handles.sb_server);
+    disp('Just opened server')
+catch
+    error('messed up openihng server')
+end
+guidata(hObject, handles);
+
+function close_server(hObject, eventdata, handles)
+try
+    fclose(handles.sb_server);
+    disp('Just closed server')
+catch
+    error('messed up closing server')
+end
+guidata(hObject, handles);
+
+function send_server_message(hObject, eventdata, handles)
+% Sends a message to the given server
+fprintf(handles.sb_server, handles.fnPath);
+disp(fprintf('Just sent %s ', handles.fnPath));
+
+
+% --- Executes on button press in message_send_checkbox.
+function message_send_checkbox_Callback(hObject, eventdata, handles)
+% hObject    handle to message_send_checkbox (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+if get(hObject,'Value') == 1
+    open_server(hObject, eventdata, handles)
+else
+    close_server(hObject, eventdata, handles)
+end
+
+% Hint: get(hObject,'Value') returns toggle state of message_send_checkbox
 
 % --- Executes on button press in WFotherGo.
 function WFotherGo_Callback(hObject, eventdata, handles)
@@ -771,6 +762,11 @@ function WFotherGo_Callback(hObject, eventdata, handles)
 global moviedata sWF
 
 flushinput(sWF)
+
+% Send message to the server if it is open
+if get(handles.message_send_checkbox, 'Value') == 1
+    send_server_message(hObject, eventdata, handles)
+end
 
 sca; PsychDefaultSetup(1); 
 Screen('Preference', 'SkipSyncTests', 1); screens = Screen('Screens');
@@ -1273,3 +1269,26 @@ guidata(hObject, handles);
 
 % Hints: get(hObject,'String') returns contents of rect_x0 as text
 %        str2double(get(hObject,'String')) returns contents of rect_x0 as a double
+
+
+
+function server_ip_Callback(hObject, eventdata, handles)
+% hObject    handle to server_ip (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of server_ip as text
+%        str2double(get(hObject,'String')) returns contents of server_ip as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function server_ip_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to server_ip (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
