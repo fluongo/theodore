@@ -22,7 +22,7 @@ function varargout = theodore(varargin)
 
 % Edit the above text to modify the response to help theodore
 
-% Last Modified by GUIDE v2.5 13-Mar-2019 17:12:06
+% Last Modified by GUIDE v2.5 03-Apr-2019 14:22:53
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -746,8 +746,10 @@ function message_send_checkbox_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 if get(hObject,'Value') == 1
     open_server(hObject, eventdata, handles)
+    set(handles.text_send_server, 'String', 'Sending stim info to timeline')
 else
     close_server(hObject, eventdata, handles)
+    set(handles.text_send_server, 'String', '')
 end
 
 % Hint: get(hObject,'Value') returns toggle state of message_send_checkbox
@@ -1292,3 +1294,47 @@ function server_ip_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in checkbox_receive_server.
+function checkbox_receive_server_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_receive_server (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+if get(hObject,'Value') ==1
+    open_receive_server(hObject, eventdata, handles)
+else
+    close_receive_server(hObject, eventdata, handles)
+end
+
+function parse_receive_server(a,b)
+% Handles incoming messages  
+m = fgetl(a);
+disp(m)
+
+function open_receive_server(hObject, eventdata, handles)
+% Opens the udp server
+try
+    disp('here')
+    set(handles.text_receive_server, 'String', 'Opened server, send "S" to run stimulus')
+    global receive_server
+    receive_server=udp('localhost', 'LocalPort', 8888, 'BytesAvailableFcn', @parse_receive_server);
+    receive_server.BytesAvailableFcnCount = 1;
+    fopen(receive_server);
+    % Clear any old messages otherwise they get appended to first message
+    if receive_server.BytesAvailable > 0
+        disp('clearing old messages')
+        tmp = fgetl(sb_server);
+    end
+    disp('Succesfully opened receiving server on port 8888')
+catch
+    disp('ERROR: Could not open udp server')
+end
+
+function close_receive_server(hObject, eventdata, handles)
+% Closes the receive server
+global receive_server
+fclose(receive_server);
+set(handles.text_receive_server, 'String', '')
+disp('Succesfully closed receiving server on port 8888')
