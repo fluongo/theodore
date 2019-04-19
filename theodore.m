@@ -22,7 +22,7 @@ function varargout = theodore(varargin)
 
 % Edit the above text to modify the response to help theodore
 
-% Last Modified by GUIDE v2.5 03-Apr-2019 14:22:53
+% Last Modified by GUIDE v2.5 19-Apr-2019 09:38:59
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -1142,10 +1142,6 @@ goBut_Callback(hObject, eventdata, handles)
 
 disp('DONE with all stimuli....')
 
-
-
-
-
 function loadOutside(fn, framerate, hObject, eventdata, handles)
 % Used for quickly loading in files same as the load button but as a
 % function
@@ -1185,8 +1181,6 @@ set(handles.playbackSpeedText, 'String', sprintf('%d', playbackHz))
 set(handles.DurationText, 'String', sprintf('%.3g MIN', nFrames/playbackHz/60))
 
 set(handles.loadingText, 'String', 'LOADED')
-
-
 
 function editRepeats_Callback(hObject, eventdata, handles)
 % hObject    handle to editRepeats (see GCBO)
@@ -1308,16 +1302,41 @@ else
     close_receive_server(hObject, eventdata, handles)
 end
 
-function parse_receive_server(a,b)
+function parse_receive_server(hObject, eventdata, handles)
 % Handles incoming messages  
-m = fgetl(a);
+global receive_server proceed_signal
+m = fgetl(receive_server);
 disp(m)
+if strcmp(m, 'START')
+    proceed_signal=1
+end
+
+function server_controlled_WF_mode(hObject, eventdata, handles)
+global proceed_signal receive_server
+
+while strcmp(receive_server.status,'open')
+    pause(3); % Necessary to let things update
+    receive_server.status
+    if proceed_signal ==1; % Execute
+        wait_sec = str2double(get(handles.edit_message_server_delay, 'String'))
+        disp(sprintf('WAITING FOR NEXT START in %d seconds', wait_sec))
+        tic
+        while toc < wait_sec
+            pause(2);
+            disp(sprintf('elapsed wait time is %3.2f sec out of %3.2f sec', toc, wait_sec))
+        end
+        WFotherGo_Callback(hObject, eventdata, handles)
+        proceed_signal = 0;
+        disp('FINISHED AND WAITING FOR NEXT START')
+    end
+end
 
 function open_receive_server(hObject, eventdata, handles)
 % Opens the udp server
 try
     disp('here')
-    set(handles.text_receive_server, 'String', 'Opened server, send "S" to run stimulus')
+    set(handles.text_receive_server, 'String', 'Opened server, send "START" to run stimulus')
+    set(handles.WFotherGo, 'Enable', 'off')
     global receive_server
     receive_server=udp('localhost', 'LocalPort', 8888, 'BytesAvailableFcn', @parse_receive_server);
     receive_server.BytesAvailableFcnCount = 1;
@@ -1328,6 +1347,7 @@ try
         tmp = fgetl(sb_server);
     end
     disp('Succesfully opened receiving server on port 8888')
+    server_controlled_WF_mode(hObject, eventdata, handles)
 catch
     disp('ERROR: Could not open udp server')
 end
@@ -1337,4 +1357,30 @@ function close_receive_server(hObject, eventdata, handles)
 global receive_server
 fclose(receive_server);
 set(handles.text_receive_server, 'String', '')
+% Re enable the button
+set(handles.WFotherGo, 'Enable', 'on')
+
 disp('Succesfully closed receiving server on port 8888')
+
+
+
+function edit_message_server_delay_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_message_server_delay (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit_message_server_delay as text
+%        str2double(get(hObject,'String')) returns contents of edit_message_server_delay as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit_message_server_delay_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_message_server_delay (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
