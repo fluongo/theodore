@@ -538,10 +538,12 @@ for i = 1 :length(all_textures)
 	
 	t = Screen('Flip', handles.window, t+1/playbackHz);
 	if KbCheck
+        ShowCursor()
 		break;
 	end;
 end
 
+ShowCursor()
 % Clear the screen/close ports
 Screen('FillRect', handles.window , handles.bg_color, handles.windowRect);
 t = Screen('Flip', handles.window)
