@@ -91,7 +91,7 @@ recipe_2p_GUI
 PsychDefaultSetup(2);
 Screen('Preference', 'SkipSyncTests', 1); 
 screens = Screen('Screens');
-screenNumber = 2 %max(screens);
+screenNumber = max(screens);
 
 Screen('Preference', 'VisualDebugLevel', 1);
 % Need to re-add in the spherical part if we need it
@@ -110,7 +110,13 @@ stim_log = []
 
 % UIWAIT makes theodore wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
+function varargout = playbackSpeedText_CreateFcn(hObject, eventdata, handles) 
 
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
 
 % --- Outputs from this function are returned to the command line.
 function varargout = theodore_OutputFcn(hObject, eventdata, handles) 
