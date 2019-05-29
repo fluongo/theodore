@@ -91,7 +91,7 @@ recipe_2p_GUI
 PsychDefaultSetup(2);
 Screen('Preference', 'SkipSyncTests', 1); 
 screens = Screen('Screens');
-screenNumber = max(screens);
+screenNumber = 1%max(screens);
 
 Screen('Preference', 'VisualDebugLevel', 1);
 % Need to re-add in the spherical part if we need it
@@ -209,7 +209,11 @@ function goBut_Callback(hObject, eventdata, handles)
 % Startup PTB and prepare the textures...
 global moviedata sWF
 
-% Check if you are sending TTLs
+% Send message to the server if it is open
+if get(handles.message_send_checkbox, 'Value') == 1
+    send_server_message(hObject, eventdata, handles)
+end
+
 
 GUIhandle = gcf;
 
@@ -245,6 +249,11 @@ completed_var = 1;
 
 for ll = 1:nRepeats
     for i = 1 :size(moviedata, 3)
+        
+        if mod(i,400) == 1
+            disp(sprintf('Displaying frame %d out of %d', (ll-1)*size(moviedata, 3)+i, size(moviedata, 3)*nRepeats));
+        end
+        
         Screen('DrawTexture', handles.window, all_textures(i), [], handles.windowRect, [], filtMode);
 
         % Do photodiode if necessary
@@ -402,6 +411,9 @@ function playbackSpeedText_Callback(hObject, eventdata, handles)
 % hObject    handle to playbackSpeedText (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+global playbackHz
+playbackHz= str2num(get(hObject,'String'))
 
 % Hints: get(hObject,'String') returns contents of playbackSpeedText as text
 %        str2double(get(hObject,'String')) returns contents of playbackSpeedText as a double
