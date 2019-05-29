@@ -57,21 +57,14 @@ function theodore_OpeningFcn(hObject, eventdata, handles, varargin)
 
 try
     sid = get(com.sun.security.auth.module.NTSystem,'DomainSID');
-    if strcmp(sid, 'S-1-5-21-3407376716-2173853237-1507913917'); % Joe Rig
-        global sWF
-        sWF = serial('COM4');
-        fopen(sWF)
-        disp('Succesfully opened arduino on COM4')
-    else ~strcmp(sid, 'S-1-5-21-234047508-22126698-30228153'); % Old WF rig
+    if ~strcmp(sid, 'S-1-5-21-234047508-22126698-30228153')
         global sWF
         sWF = serial('COM3');
         fopen(sWF)
-        disp('Succesfully opened arduino on COM3')
     end
     handles.hasArduino = 1;
 catch
     handles.hasArduino = 0;
-    disp('Failed to open arduino')
 end
 
 % Choose default command line output for theodore
@@ -91,18 +84,29 @@ set(handles.axes1, 'xtick', [], 'ytick', [])
 
 set(handles.figure1,'CloseRequestFcn',[]);
 
+% Launch the recipe GUI for 2P
+recipe_2p_GUI
 
+% Here we call some default settings for setting up Psychtoolbox
+PsychDefaultSetup(2);
+Screen('Preference', 'SkipSyncTests', 1); 
+screens = Screen('Screens');
+screenNumber = max(screens);
+
+Screen('Preference', 'VisualDebugLevel', 1);
+% Need to re-add in the spherical part if we need it
+
+% Standard window
+handles.bg_color = 0.01;  % Make it pretty black..
+rect = []; pixelsize = []; numBuffers = []; stereomode = 0;
+[handles.window, handles.windowRect] = PsychImaging('OpenWindow', screenNumber, handles.bg_color, rect, pixelsize, numBuffers, stereomode);
 
 % Update handles structure
 guidata(hObject, handles);
 
+global stim_log
+stim_log = []
 
-% build globalRect
-rect_Callback(hObject, eventdata, handles); 
-
-
-% UIWAIT makes theodore wait for user response (see UIRESUME)
-% uiwait(handles.figure1);
 
 
 % --- Outputs from this function are returned to the command line.
@@ -195,6 +199,7 @@ guidata(hObject, handles);
 
 
 
+
 % --- Executes on button press in goBut.
 function goBut_Callback(hObject, eventdata, handles)
 % hObject    handle to goBut (see GCBO)
@@ -204,100 +209,83 @@ function goBut_Callback(hObject, eventdata, handles)
 % Startup PTB and prepare the textures...
 global moviedata sWF
 
-
 % Check if you are sending TTLs
-
-if handles.TTLcheck
-	if ~isempty(sWF)
-		if strcmp(sWF.Status, 'open')
-			fclose(sWF)
-		end
-	end
-    s = serial('COM3');
-    fopen(s);
-end
 
 GUIhandle = gcf;
 
-[window, windowRect] = TheodorePTBStartup2P(2, handles.Sphericalcheck);
+%[window, windowRect] = TheodorePTBStartup2P(2, handles.Sphericalcheck);
 
-
-if isa(moviedata, 'single')
-	moviedata = double(moviedata);
+% Check if moviedata is uint8 and convert if not
+if ~isa(moviedata, 'uint8')
+    moviedata = moviedata - min(moviedata(:));
+    moviedata = uint8(255*moviedata/max(moviedata(:)));
 end
-all_textures = PTBprepTextures(moviedata, window);
 
-t =  Screen('Flip', window); % Get flip time
+all_textures = PTBprepTextures(moviedata, handles.window);
+
+t =  Screen('Flip', handles.window); % Get flip time
 filtMode = 0; % Nearest interpolation
 
 nRepeats = str2num(get(handles.editRepeats, 'String'));
 
+global playbackHz fnPath
 
-global playbackHz
+disp(sprintf('File name which is being sent is %s', handles.fnPath))
+
+ShowCursor()% Makes sure that the cursor is till usable
+
+% Set var for photodiode
+total_frame_cnt = 1;
+
+white= 255; % Value for white
+
 tic
-if handles.TTLcheck
-	disp('SENDING 2P DATA....')
-	sbudp = udp('131.215.25.182', 'RemotePort', 7000);
-	fopen(sbudp)
-	pause(5); 
-	fprintf(sbudp, 'G'); 
-	pause(20)
-	try
-		fprintf(sbudp, ['M', handles.fnPath]);	
-	catch
-		global fnPath; fprintf(sbudp, ['M', fnPath]);	
-	end
-	
-	fprintf(sbudp, sprintf('Mplayback of %d hz', playbackHz))
-	if handles.Sphericalcheck
-		fprintf(sbudp, ['M', 'spherical correction applied to stimulus'])
-	end
-end
 
-% Do two cases for whether you need to send a ttl or not
+completed_var = 1;
 
-if ~handles.TTLcheck
-	
-	for ll = 1:nRepeats
-		for i = 1 :size(moviedata, 3)
-			Screen('DrawTexture', window, all_textures(i), [], windowRect, [], filtMode);
-			t = Screen('Flip', window, t+1/playbackHz);
-			if KbCheck
-				break;
-			end;
-		end
-	end
-	
-else
-	for ll = 1:nRepeats
-		for i = 1 :size(moviedata, 3)
-			fprintf(s,1)
-			Screen('DrawTexture', window, all_textures(i), [], windowRect, [], filtMode);
-			t = Screen('Flip', window, t+1/playbackHz);
+for ll = 1:nRepeats
+    for i = 1 :size(moviedata, 3)
+        Screen('DrawTexture', handles.window, all_textures(i), [], handles.windowRect, [], filtMode);
 
-			if mod(i,500) == 499
-				flushinput(s)
-			end
+        % Do photodiode if necessary
+        if get(handles.checkbox_pd, 'Value') == 1
+            Screen('FillRect', handles.window, mod(total_frame_cnt, 2)*[white white white], [0,0,str2num(get(handles.pd_size, 'String')),str2num(get(handles.pd_size, 'String'))]);
+            total_frame_cnt = total_frame_cnt + 1;
+        end
 
-			if KbCheck
-				break;
-			end;
-		end
-	end
-	fclose(s)
-end
-
-if handles.TTLcheck
-	pause(2)
-	fprintf(sbudp, 'S')
-	pause(10)
-	fclose(sbudp)
+        t = Screen('Flip', handles.window, t+1/playbackHz);
+        if KbCheck
+            [keyIsDown, secs, keyCode, deltaSecs] = KbCheck();
+            if find(keyCode) == 27; % Corresponds to escape key for exit
+                completed_var = 0
+                break;
+            end
+        end;
+    end
 end
 
 % Clear the screen/close ports
-Screen('CloseAll')
+Screen('FillRect', handles.window , handles.bg_color, handles.windowRect);
+t = Screen('Flip', handles.window)
+
+% Write everything to the log
+global stim_log
+if isempty(stim_log)
+    stim_log.fn = handles.fnPath;
+    stim_log.playback_hz = playbackHz;
+    stim_log.completed = completed_var;
+    stim_log.nRepeats = nRepeats;
+else
+    idx = length(stim_log)
+    stim_log(idx+1).fn = handles.fnPath;
+    stim_log(idx+1).playback_hz = playbackHz
+    stim_log(idx+1).completed = completed_var;
+    stim_log(idx+1).nRepeats = nRepeats;
+end
+
 playbackHz
 disp(sprintf('elapsed time was %4.4f seconds and should have been %4.4f', toc, size(moviedata, 3)/playbackHz))
+
 
 
 % --- Executes on button press in stopBut.
@@ -467,6 +455,7 @@ guidata(hObject, handles);
 % Hint: get(hObject,'Value') returns toggle state of check2Psend
 
 
+
 % --- Executes on button press in mouseChase.
 function mouseChase_Callback(hObject, eventdata, handles)
 % hObject    handle to mouseChase (see GCBO)
@@ -474,27 +463,22 @@ function mouseChase_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 playbackHz = 10
-[window, windowRect] = TheodorePTBStartup2P(2, handles.Sphericalcheck);
 tempMovieData =  0.5*ones(9,16,4000);
 
-all_textures = PTBprepTextures(tempMovieData, window);
-
+all_textures = PTBprepTextures(tempMovieData, handles.window);
 % Standard window
-screenNumber = 2;
-color = 0.5; rect = []; pixelsize = []; numBuffers = []; stereomode = 0;
-[window, windowRect] = PsychImaging('OpenWindow', screenNumber, color, rect, pixelsize, numBuffers, stereomode);
-theX = round(windowRect(RectRight) / 2); theY = round(windowRect(RectBottom) / 2);
+theX = round(handles.windowRect(RectRight) / 2); theY = round(handles.windowRect(RectBottom) / 2);
 
-
-t =  Screen('Flip', window); % Get flip time
+t =  Screen('Flip', handles.window); % Get flip time
 filtMode = 0; % Nearest interpolation
 % Stuff for setting mouse...
-SetMouse(theX,theY,screenNumber); HideCursor;
+screenNumber = 2;
+SetMouse(theX,theY, screenNumber); HideCursor;
 
 % Create a single gaussian transparency mask and store it to a texture:
 texsize = 150; mask=ones(texsize, texsize) * 1;
 
-masktex1=Screen('MakeTexture', window, mask); masktex2=Screen('MakeTexture', window, mask-1);
+masktex1=Screen('MakeTexture', handles.window, mask); masktex2=Screen('MakeTexture', handles.window, mask-1);
 
 for i = 1 :length(all_textures)
 	% On each iteration simply draw it with a gaussian mask centere on a
@@ -503,24 +487,26 @@ for i = 1 :length(all_textures)
 	% myrect must be redfined using the mouse position at each frame
 	[mx, my, buttons]=GetMouse(screenNumber);
 	
-	Screen('DrawTexture', window, all_textures(i), [], windowRect, [], filtMode);
+	Screen('DrawTexture', handles.window, all_textures(i), [], handles.windowRect, [], filtMode);
 	% Code below will animate it to flashing
 	if mod(i,2) == 0
-		Screen('DrawTexture', window, masktex1, [], [mx-texsize my-texsize mx+texsize my+texsize]);
+		Screen('DrawTexture', handles.window, masktex1, [], [mx-texsize my-texsize mx+texsize my+texsize]);
 	else
-		Screen('DrawTexture', window, masktex2, [], [mx-texsize my-texsize mx+texsize my+texsize]);
+		Screen('DrawTexture', handles.window, masktex2, [], [mx-texsize my-texsize mx+texsize my+texsize]);
 	end
 	
-	t = Screen('Flip', window, t+1/playbackHz);
+	t = Screen('Flip', handles.window, t+1/playbackHz);
 	if KbCheck
+        ShowCursor()
 		break;
 	end;
 end
 
-set(handles.loadingText, 'String', ' ')
-
+ShowCursor()
 % Clear the screen/close ports
-Screen('CloseAll');
+Screen('FillRect', handles.window , handles.bg_color, handles.windowRect);
+t = Screen('Flip', handles.window)
+disp('finished mouse chase')
 
 
 
