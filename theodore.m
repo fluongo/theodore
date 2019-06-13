@@ -22,7 +22,7 @@ function varargout = theodore(varargin)
 
 % Edit the above text to modify the response to help theodore
 
-% Last Modified by GUIDE v2.5 28-May-2019 17:35:40
+% Last Modified by GUIDE v2.5 13-Jun-2019 11:41:49
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -89,7 +89,7 @@ recipe_2p_GUI
 
 % Here we call some default settings for setting up Psychtoolbox
 PsychDefaultSetup(2);
-Screen('Preference', 'SkipSyncTests', 1); 
+%Screen('Preference', 'SkipSyncTests', 1); 
 screens = Screen('Screens');
 screenNumber = 1%max(screens);
 
@@ -101,11 +101,16 @@ handles.bg_color = 0.01;  % Make it pretty black..
 rect = []; pixelsize = []; numBuffers = []; stereomode = 0;
 [handles.window, handles.windowRect] = PsychImaging('OpenWindow', screenNumber, handles.bg_color, rect, pixelsize, numBuffers, stereomode);
 
+% Adding priority to maybe fix timing
+priorityLevel=MaxPriority(screenNumber); Priority(priorityLevel);
+
 % Update handles structure
 guidata(hObject, handles);
 
 global stim_log
 stim_log = []
+
+figure(hObject); % REturn focus to figure
 
 
 
@@ -246,7 +251,7 @@ white= 255; % Value for white
 tic
 
 completed_var = 1;
-
+frames_per_trial = str2num(get(handles.pd_edit_frames_per_trial, 'String'));
 for ll = 1:nRepeats
     for i = 1 :size(moviedata, 3)
         
@@ -257,10 +262,14 @@ for ll = 1:nRepeats
         Screen('DrawTexture', handles.window, all_textures(i), [], handles.windowRect, [], filtMode);
 
         % Do photodiode if necessary
-        if get(handles.checkbox_pd, 'Value') == 1
+        if get(handles.checkbox_pd, 'Value') == 1 &  get(handles.pd_check_signal_trials, 'Value') == 0 % Every frame
             Screen('FillRect', handles.window, mod(total_frame_cnt, 2)*[white white white], [0,0,str2num(get(handles.pd_size, 'String')),str2num(get(handles.pd_size, 'String'))]);
-            total_frame_cnt = total_frame_cnt + 1;
+        elseif get(handles.checkbox_pd, 'Value') == 1 &  get(handles.pd_check_signal_trials, 'Value') == 1 % Trial based
+            % Do some quick math and do modulo of divided version
+            curr_color = floor(total_frame_cnt/frames_per_trial)  +1; % Make sure it starts with white 
+            Screen('FillRect', handles.window, mod(curr_color, 2)*[white white white], [0,0,str2num(get(handles.pd_size, 'String')),str2num(get(handles.pd_size, 'String'))]);
         end
+        total_frame_cnt = total_frame_cnt+1;
 
         t = Screen('Flip', handles.window, t+1/playbackHz);
         if KbCheck
@@ -508,10 +517,17 @@ for i = 1 :length(all_textures)
 	end
 	
 	t = Screen('Flip', handles.window, t+1/playbackHz);
-	if KbCheck
-        ShowCursor()
-		break;
-	end;
+    if KbCheck
+        [keyIsDown, secs, keyCode, deltaSecs] = KbCheck();
+        if find(keyCode) == 27; % Corresponds to escape key for exit
+            ShowCursor()
+            break;
+        elseif find(keyCode) == 38; % UP
+            texsize = min(texsize+10, 150);
+        elseif find(keyCode) == 40; % DOWN
+            texsize = max(texsize-10, 10);            
+        end
+    end;
 end
 
 ShowCursor()
@@ -1406,6 +1422,38 @@ function pd_size_Callback(hObject, eventdata, handles)
 % --- Executes during object creation, after setting all properties.
 function pd_size_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to pd_size (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in pd_check_signal_trials.
+function pd_check_signal_trials_Callback(hObject, eventdata, handles)
+% hObject    handle to pd_check_signal_trials (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of pd_check_signal_trials
+
+
+
+function pd_edit_frames_per_trial_Callback(hObject, eventdata, handles)
+% hObject    handle to pd_edit_frames_per_trial (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of pd_edit_frames_per_trial as text
+%        str2double(get(hObject,'String')) returns contents of pd_edit_frames_per_trial as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function pd_edit_frames_per_trial_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to pd_edit_frames_per_trial (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
