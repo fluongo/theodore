@@ -1042,125 +1042,7 @@ function checkbox8_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox8
 
-
-% --- Executes on button press in pushbutton11.
-function pushbutton11_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton11 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
-%%%%%%%%%%%%%%%%%%%%%%
-% 18CM Screen%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%
-
-%RF
-disp('Loading RF....')
-loadOutside('X:\MASTER_STIMULUS_FOLDER\18cm_screenDistance\cm18_Dario_RFstim_3000fr_og.mat', 4, hObject, eventdata, handles)
-goBut_Callback(hObject, eventdata, handles)
-
-disp('Press any key to pause experiment.....')
-tic
-while toc<20 % seconds
-	disp('Pause, press any key to continue experiment...')
-	if KbCheck
-		pause
-	end
-end
-
-%RF CM noise
-disp('Loading RF CM noise....')
-loadOutside('X:\MASTER_STIMULUS_FOLDER\18cm_screenDistance\cm18_Dario_RFstim_500fr_CMnoise.mat', 28, hObject, eventdata, handles)
-goBut_Callback(hObject, eventdata, handles)
-
-disp('pausing...')
-
-disp('Press any key to pause experiment.....')
-tic
-while toc<10 % seconds
-	disp('Pause, press any key to continue experiment...')
-	if KbCheck
-		pause
-	end
-end
-
-%Moving Square 1
-disp('Loading Grating Moving Square 1....')
-loadOutside('X:\MASTER_STIMULUS_FOLDER\18cm_screenDistance\cm18_MovingSquares_Grating_128pos_640s.mat', 28, hObject, eventdata, handles)
-goBut_Callback(hObject, eventdata, handles)
-
-disp('Press any key to pause experiment.....')
-tic
-while toc<10 % seconds
-	disp('Pause, press any key to continue experiment...')
-	if KbCheck
-		pause
-	end
-end
-
-
-%Moving Square 2
-disp('Loading SimncelliNoise Moving Square....')
-loadOutside('X:\MASTER_STIMULUS_FOLDER\18cm_screenDistance\cm18_MovingSquares_SimoncelliNoise_128pos_640s.mat', 28, hObject, eventdata, handles)
-goBut_Callback(hObject, eventdata, handles)
-
-
-disp('Press any key to pause experiment.....')
-tic
-while toc<10 % seconds
-	disp('Pause, press any key to continue experiment...')
-	if KbCheck
-		pause
-	end
-end
-
-
-%Moving Square 3
-disp('Loading Grating Moving Square REVERSE....')
-loadOutside('X:\MASTER_STIMULUS_FOLDER\18cm_screenDistance\cm18_MovingSquares_GratingR_128pos_640s.mat', 28, hObject, eventdata, handles)
-goBut_Callback(hObject, eventdata, handles)
-
-disp('Press any key to pause experiment.....')
-tic
-while toc<10 % seconds
-	disp('Pause, press any key to continue experiment...')
-	if KbCheck
-		pause
-	end
-end
-
-
-%RF surround
-disp('Loading RF Surrund....')
-loadOutside('X:\MASTER_STIMULUS_FOLDER\18cm_screenDistance\cm18_RF_surround_28Hz_9size_10repeat.mat', 28, hObject, eventdata, handles)
-goBut_Callback(hObject, eventdata, handles)
-
-tic
-
-while toc<20 % seconds
-	disp('Pause, press any key to continue experiment...')
-	if KbCheck
-		pause
-	end
-end
-
-
-%HBO
-disp('Playing HBO movie')
-%optionPause(hObject, eventdata, handles)
-set(handles.editRepeats, 'String', '10')
-loadOutside('X:\MASTER_STIMULUS_FOLDER\Movie_HBO_30s.mat', 30, hObject, eventdata, handles)
-goBut_Callback(hObject, eventdata, handles)
-set(handles.editRepeats, 'String', '1')
-
-%Orientation
-disp('Playing Orientation Selectivity')
-loadOutside('X:\MASTER_STIMULUS_FOLDER\18cm_screenDistance\cm18_OrientationTuning.mat', 28, hObject, eventdata, handles)
-goBut_Callback(hObject, eventdata, handles)
-
-disp('DONE with all stimuli....')
-
-function loadOutside(fn, framerate, hObject, eventdata, handles)
+function handles = loadOutside(fn, framerate, hObject, eventdata, handles)
 % Used for quickly loading in files same as the load button but as a
 % function
 
@@ -1245,27 +1127,63 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-% --- Executes on button press in addstimrecipe_button.
-function addstimrecipe_button_Callback(hObject, eventdata, handles)
-% hObject    handle to addstimrecipe_button (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
-% --- Executes on button press in resetrecipe_button.
-function resetrecipe_button_Callback(hObject, eventdata, handles)
-% hObject    handle to resetrecipe_button (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
-% --- Executes on button press in playrecipe_button.
+% --- Executes on button press in but_runrecipe.
 function playrecipe_button_Callback(hObject, eventdata, handles)
-% hObject    handle to playrecipe_button (see GCBO)
+% hObject    handle to but_runrecipe (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 
+global recipe_data
+
+nExperiment = size(recipe_data, 1);
+
+
+i = 1;
+while i <= nExperiment
+    fn = recipe_data{i,1};
+    fr_rate = recipe_data{i,2};
+    handles = loadOutside(fn, fr_rate, hObject, eventdata, handles)
+    guidata(hObject, handles);
+    
+    goBut_Callback(hObject, eventdata, handles)
+
+    tic
+    fprintf('!!!!!! PRESS ANY KEY TO PAUSE EXPERIMENT ... !!!!!!!!')
+    ct = 0; i = i+1; % iterate counter
+    h = msgbox('To pause, simply press any ke in the next %f seconds.')
+    set(findobj(h,'style','pushbutton'),'Visible','off')
+    while toc<60 % seconds
+        str = sprintf('To pause, simply press any ke in the next %d seconds.', 60-round(toc));
+        set(findobj(h,'Tag','MessageBox'),'String',str); % Send string to the text control on the GUI
+        drawnow;  % Force immediate update/refresh of the GUI.
+        if KbCheck
+            quest = 'Experiment is currently paused, would you like to rerun, contiue, or exit?';
+            title = 'Theodore Paused'; defbtn = 'continue';
+            answer = questdlg(quest,title,'rerun','continue','exit',defbtn);
+            switch answer
+                case 'rerun'
+                    i = i-1; continue; % Roll back counter
+                case 'continue'
+                    continue; % Just move on since everything is fine
+                case 'exit'
+                    i = nExperiment+100; continue;%Exit condition
+            end
+        
+        end
+    end
+    
+    % Close the figure if still open
+    try
+        close(h)
+    catch
+        continue
+    end
+       
+        
+end
+
+disp('DONE with all stimuli....')
 
 function rect_Callback(hObject, eventdata, handles)
 % hObject    handle to rect_x0 (see GCBO)
