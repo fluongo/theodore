@@ -262,12 +262,16 @@ for ll = 1:nRepeats
         Screen('DrawTexture', handles.window, all_textures(i), [], handles.windowRect, [], filtMode);
 
         % Do photodiode if necessary
-        if get(handles.checkbox_pd, 'Value') == 1 &  get(handles.pd_check_signal_trials, 'Value') == 0 % Every frame
-            Screen('FillRect', handles.window, mod(total_frame_cnt, 2)*[white white white], [0,0,str2num(get(handles.pd_size, 'String')),str2num(get(handles.pd_size, 'String'))]);
-        elseif get(handles.checkbox_pd, 'Value') == 1 &  get(handles.pd_check_signal_trials, 'Value') == 1 % Trial based
+        if get(handles.checkbox_pd, 'Value') == 1 %&  get(handles.pd_check_signal_trials, 'Value') == 0 % Every frame
+%             Screen('FillRect', handles.window, mod(total_frame_cnt, 2)*[white white white], [0,0,str2num(get(handles.pd_size, 'String')),str2num(get(handles.pd_size, 'String'))]);
+%         elseif get(handles.checkbox_pd, 'Value') == 1 &  get(handles.pd_check_signal_trials, 'Value') == 1 % Trial based
             % Do some quick math and do modulo of divided version
-            curr_color = floor(total_frame_cnt/frames_per_trial)  +1; % Make sure it starts with white 
-            Screen('FillRect', handles.window, mod(curr_color, 2)*[white white white], [0,0,str2num(get(handles.pd_size, 'String')),str2num(get(handles.pd_size, 'String'))]);
+            if frames_per_trial == 1 % Every frame
+                Screen('FillRect', handles.window, mod(total_frame_cnt, 2)*[white white white], [0,0,str2num(get(handles.pd_size, 'String')),str2num(get(handles.pd_size, 'String'))]);
+            else
+                curr_color = floor(total_frame_cnt/frames_per_trial)  +1; % Make sure it starts with white 
+                Screen('FillRect', handles.window, mod(curr_color, 2)*[white white white], [0,0,str2num(get(handles.pd_size, 'String')),str2num(get(handles.pd_size, 'String'))]);
+            end
         end
         total_frame_cnt = total_frame_cnt+1;
 
