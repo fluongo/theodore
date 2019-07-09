@@ -89,7 +89,7 @@ recipe_2p_GUI
 
 % Here we call some default settings for setting up Psychtoolbox
 PsychDefaultSetup(2);
-%Screen('Preference', 'SkipSyncTests', 1); 
+Screen('Preference', 'SkipSyncTests', 1); 
 screens = Screen('Screens');
 screenNumber = 1%max(screens);
 
@@ -1143,6 +1143,11 @@ i = 1;
 while i <= nExperiment
     fn = recipe_data{i,1};
     fr_rate = recipe_data{i,2};
+    % Set the updated photodiode for the stimulus
+    if ~isempty(recipe_data{i, 5})
+        set(handles.pd_edit_frames_per_trial, 'String', num2str(recipe_data{i, 5}))
+    end
+    
     handles = loadOutside(fn, fr_rate, hObject, eventdata, handles)
     guidata(hObject, handles);
     
