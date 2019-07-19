@@ -1333,6 +1333,9 @@ end
 
 function open_receive_server(hObject, eventdata, handles)
 % Opens the udp server
+global proceed_signal
+proceed_signal =0; % Ib case it was shut down
+
 try
     disp('here')
     set(handles.text_receive_server, 'String', 'Opened server, send "START" to run stimulus')
@@ -1342,7 +1345,7 @@ try
     receive_server.BytesAvailableFcnCount = 1;
     fopen(receive_server);
     % Clear any old messages otherwise they get appended to first message
-    if receive_server.BytesAvailable > 0
+    while receive_server.BytesAvailable > 0
         disp('clearing old messages')
         tmp = fgetl(sb_server);
     end
