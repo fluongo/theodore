@@ -22,7 +22,7 @@ function varargout = theodore(varargin)
 
 % Edit the above text to modify the response to help theodore
 
-% Last Modified by GUIDE v2.5 19-Apr-2019 09:38:59
+% Last Modified by GUIDE v2.5 29-Aug-2019 11:02:23
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -792,6 +792,11 @@ end
 pixelsize = []; numBuffers = []; stereomode = 0;
 [window, windowRect] = PsychImaging('OpenWindow', screenNumber, color, rect, pixelsize, numBuffers, stereomode);
 
+if handles.Sphericalcheck
+    PsychImaging('PrepareConfiguration')
+    PsychImaging('AddTask', 'GeometryCorrection', handles.spherical_cal_fn);
+end
+
 all_textures = zeros(1, size(moviedata,3)); 
 
 for i = 1 : size(moviedata, 3) 
@@ -1269,3 +1274,15 @@ function edit_message_server_delay_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in spherical_get_cal_file.
+function spherical_get_cal_file_Callback(hObject, eventdata, handles)
+% hObject    handle to spherical_get_cal_file (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+[file,path] = uigetfile
+handles.spherical_cal_fn = fullfile(path, file)
+guidata(hObject, handles);
+
