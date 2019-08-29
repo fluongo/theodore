@@ -788,14 +788,14 @@ else
     rect = [];
 end
 
+if handles.Sphericalcheck
+    PsychImaging('PrepareConfiguration')
+    PsychImaging('AddTask', 'AllViews', 'GeometryCorrection', handles.spherical_cal_fn);
+end
+
 %rect = [];
 pixelsize = []; numBuffers = []; stereomode = 0;
 [window, windowRect] = PsychImaging('OpenWindow', screenNumber, color, rect, pixelsize, numBuffers, stereomode);
-
-if handles.Sphericalcheck
-    PsychImaging('PrepareConfiguration')
-    PsychImaging('AddTask', 'GeometryCorrection', handles.spherical_cal_fn);
-end
 
 all_textures = zeros(1, size(moviedata,3)); 
 
