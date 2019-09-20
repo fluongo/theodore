@@ -22,7 +22,7 @@ function varargout = theodore(varargin)
 
 % Edit the above text to modify the response to help theodore
 
-% Last Modified by GUIDE v2.5 29-Aug-2019 11:02:23
+% Last Modified by GUIDE v2.5 19-Sep-2019 11:34:52
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -834,7 +834,6 @@ for kk = 1:nRepeats
 %         if KbCheck
 %             break;
 % 		end;
-%         
         t = Screen('Flip', window, t + 1/playbackHz);
 
     end
@@ -1282,7 +1281,12 @@ function spherical_get_cal_file_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-[file,path] = uigetfile
-handles.spherical_cal_fn = fullfile(path, file)
-guidata(hObject, handles);
-
+[file,path] = uigetfile('C:\git_repositories\theodore\spherical_correction\config_files\*.mat')
+if file ~=0 % If something was chosen
+    handles.spherical_cal_fn = fullfile(path, file);
+    guidata(hObject, handles);
+    set(handles.text_spherical, 'String', sprintf('Loaded config %s', file))
+else
+    % No file loaded
+    set(handles.text_spherical, 'String', 'Failed to load config; load new one')
+end
