@@ -91,7 +91,7 @@ recipe_2p_GUI
 PsychDefaultSetup(2);
 Screen('Preference', 'SkipSyncTests', 1); 
 screens = Screen('Screens');
-screenNumber = 1%max(screens);
+screenNumber = 2%max(screens); # 0 is both monitors, 1 is right, 2 is left
 
 Screen('Preference', 'VisualDebugLevel', 1);
 % Need to re-add in the spherical part if we need it
